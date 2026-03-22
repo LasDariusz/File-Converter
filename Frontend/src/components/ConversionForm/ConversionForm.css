@@ -1,0 +1,15 @@
+.conversion-form {
+    background: #fff;
+    border: 1px solid #e4e4e7;
+    border-radius: 14px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.format-readonly {
+    pointer-events: none;
+    cursor: default;
+    background: #f4f5f7;
+}

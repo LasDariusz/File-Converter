@@ -1,0 +1,39 @@
+.auth-wrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.auth-layout {
+    width: 100%;
+    max-width: 480px;
+    background: #ffffff;
+    border: 1px solid #e4e4e7;
+    border-radius: 14px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.auth-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+.app-name {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: #171717;
+}
+
+.auth-subtitle {
+    color: #555;
+    font-size: 14px;
+}

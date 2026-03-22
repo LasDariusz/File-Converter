@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  minio-storage:  
+    image: minio/minio
+    container_name: minio-file-storage
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: Password123!
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  sqlserver-db:
+    image: mcr.microsoft.com/mssql/server:2025-latest
+    container_name: sql-server-db
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=Password123!
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+
+  api:
+    build:
+      context: "./Api"
+      dockerfile: Dockerfile
+    container_name: dotnet-file-api
+    ports:
+      - "5194:8080"
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=FileConverter;User Id=sa;Password=Password123!;TrustServerCertificate=True
+      - Minio__Endpoint=minio-storage:9000
+      - Minio__AccessKey=admin
+      - Minio__SecretKey=Password123!
+    depends_on:
+      - sqlserver-db
+      - minio-storage
+
+  hidden-api:
+    build:
+      context: "./Converter" 
+    container_name: python-converter
+    ports:
+      - "8000:8000"
+    environment:
+      - MINIO_ENDPOINT=minio-storage:9000
+      - MINIO_ACCESS_KEY=admin
+      - MINIO_SECRET_KEY=Password123!
+    depends_on:
+      - minio-storage
+
+  frontend:
+      build:
+        context: "./Frontend"
+        dockerfile: Dockerfile
+      container_name: react-frontend
+      ports:
+        - "3000:80"
+      depends_on:
+        - api
+  
+volumes:
+  minio_data:
+  sqlserver_data:

@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+minio
+python-multipart
+pydantic
+pydantic-settings
+Pillow
+pillow-heif
+cairosvg
