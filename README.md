@@ -1,7 +1,7 @@
 ### 1. Project Setup
 
 Run the following command in the project root directory:
-    ```bash
+    ```
     docker compose up --build
     ```
 ### 2. Open the app
