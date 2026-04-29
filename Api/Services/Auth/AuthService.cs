@@ -10,7 +10,7 @@ using Api.DomainModels.GenericResult;
 using Api.DomainModels.Features.Register;
 using Api.DomainModels.Features.RefreshToken;
 using Api.DomainModels.Features.Login;
-
+using Api.Exceptions;
 
 namespace Api.Services.Auth;
 
@@ -24,6 +24,7 @@ public class AuthService : IAuthService
         _dbContext = fileConverterContext;
         _jwtSecret = "SuperExtraSecretJwtKey1234567890";
     }
+
     private string GenerateJwtToken(UserEntity user)
     {
         var claims = new List<Claim>
@@ -47,7 +48,6 @@ public class AuthService : IAuthService
         return new JwtSecurityTokenHandler().WriteToken(token);
     }
 
-
     public async Task<Result<LoginModelResponse>> LoginAsync(LoginModel model)
     {
         var email = model.Email;
@@ -58,27 +58,30 @@ public class AuthService : IAuthService
             return Result<LoginModelResponse>.Failure("Empty login credentials", ErrorType.Validation);
         }
 
-        var user = await _dbContext.Users
+        var userEntity = await _dbContext.Users
             .FirstOrDefaultAsync(u => u.Email == email);
 
-        if (user == null)
+        if (userEntity == null)
         {
-            return Result<LoginModelResponse>.Failure($"User '{email}' not found", ErrorType.Validation);
+            throw new UnauthorizedException();
+            // return Result<LoginModelResponse>.Failure($"User '{email}' not found", ErrorType.Validation);
         }
 
-        bool isValidPassword = BCrypt.Net.BCrypt.Verify(password, user.PasswordHash);
+        bool validPassword = BCrypt.Net.BCrypt
+            .Verify(password, userEntity.PasswordHash);
 
-        if (!isValidPassword)
+        if (!validPassword)
         {
-            return Result<LoginModelResponse>.Failure("Wrong password", ErrorType.Validation);
+            throw new UnauthorizedException();
+            // return Result<LoginModelResponse>.Failure("Wrong password", ErrorType.Validation);
         }
 
-        var token = GenerateJwtToken(user);
+        var token = GenerateJwtToken(userEntity);
 
         return Result<LoginModelResponse>.Success(new LoginModelResponse { 
-            PublicId = user.PublicId,
-            Username = user.Username,
-            Email = user.Email,
+            PublicId = userEntity.PublicId,
+            Username = userEntity.Username,
+            Email = userEntity.Email,
             Token = token 
         });
     }
@@ -99,7 +102,7 @@ public class AuthService : IAuthService
 
         if (userExists)
         {
-            return Result<RegisterModelResponse>.Failure($"User '{username}' '{email} already exists", ErrorType.Conflict);
+            //return Result<RegisterModelResponse>.Failure($"User '{username}' '{email} already exists", ErrorType.Conflict);
         }
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
