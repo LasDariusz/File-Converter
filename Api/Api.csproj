@@ -8,9 +8,16 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Database\Migrations\" />
-    <Folder Include="Exceptions\" />
-    <Folder Include="Migrations\" />
+    <Compile Remove="Application\Features\Files\FetchUserFilesMetadata\FetchUserFilesMetadataResponse.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Application\Features\Users\" />
+    <Folder Include="Infrastructure\Database\Migrations\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="Application\Features\Files\FetchUserFilesMetadata\FetchUserFilesMetadataResponse.cs" />
   </ItemGroup>
 
   <ItemGroup>

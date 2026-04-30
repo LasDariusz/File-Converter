@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Api.Exceptions;
+using Api.Application.Exceptions;
 
 namespace Api.Middlewares;
 

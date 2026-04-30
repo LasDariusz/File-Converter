@@ -1,14 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Api.Services.Auth;
-using Api.DomainModels.GenericResult;
-using Api.DomainModels.Features.Login;
-using Api.DomainModels.Features.Register;
-using Api.DomainModels.Features.RefreshToken;
-using Api.DTOs.Features.Login;
-using Api.DTOs.Features.Register;
-using Api.DTOs.Features.RefreshToken;
+using Api.Application.Features.Auth.Login;
+using Api.Application.Features.Auth.Register;
+
+using Api.DTOs.Requests;
+using Api.DTOs.Responses;
+using Api.DTOs.Shared;
 
 
 namespace Api.Controllers;
@@ -17,52 +15,37 @@ namespace Api.Controllers;
 [ApiController]
 public class AuthController : ControllerBase
 {
-    private readonly IAuthService _authService;
+    private readonly ILoginService _loginService;
+    private readonly IRegisterService _registerService;
 
-    public AuthController(IAuthService authService)
+    public AuthController(ILoginService loginService, IRegisterService registerService)
     {
-        _authService = authService;
+        _loginService = loginService;
+        _registerService = registerService;
     }
 
-    private IActionResult MapError(ErrorType? errorType, string? error)
-    {
-        return errorType switch
-        {
-            ErrorType.NotFound => NotFound(error),
-
-            ErrorType.Validation => BadRequest(error),
-
-            ErrorType.Conflict => Conflict(error),
-
-            ErrorType.Unauthorized => Unauthorized(error),
-
-            ErrorType.Unknown => StatusCode(500, error),
-
-            _ => StatusCode(500, error)
-        };
-    }
 
     [AllowAnonymous]
     [HttpPost("login")]
     public async Task<IActionResult> LoginAsync([FromBody] LoginRequestDto req)
     {
-        var serviceResult = await _authService.LoginAsync(new LoginModel
+        var serviceResult = await _loginService.LoginAsync(new LoginRequest
         {
             Email = req.Email,
             Password = req.Password
         });
 
-        if (!serviceResult.IsSuccess)
-        {
-            return MapError(serviceResult.ErrorType, serviceResult.Error);
-        }
-
         var res = new LoginResponseDto
         {
-            id = serviceResult.Value.PublicId.ToString(),
-            username = serviceResult.Value.Username,
-            email = serviceResult.Value.Email,
-            token = serviceResult.Value.Token
+            AccessToken = serviceResult.AccessToken,
+            RefreshToken = serviceResult.RefreshToken,
+            ExpiresInMinutes = serviceResult.ExpiresInMinutes,
+            UserData = new AuthenticatedUserDataDto
+            { 
+                UserId = serviceResult.UserData.UserId,
+                Email = serviceResult.UserData.Email,
+                Username = serviceResult.UserData.Username
+            }
         };
 
         return Ok(res);
@@ -72,32 +55,31 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> RegisterAsync([FromBody] RegisterRequestDto req)
     {
-        var serviceResult = await _authService.RegisterAsync(new RegisterModel
+        var serviceResult = await _registerService.RegisterAsync(new RegisterRequest
         {
             Email = req.Email,
-            Username = req.Username,
             Password = req.Password
         });
 
-        if (!serviceResult.IsSuccess)
-        {
-            return MapError(serviceResult.ErrorType, serviceResult.Error);
-        }
-
         var res = new RegisterResponseDto
         {
-            id = serviceResult.Value.PublicId.ToString(),
-            username = serviceResult.Value.Username,
-            email = serviceResult.Value.Email,
-            token = serviceResult.Value.Token
+            AccessToken = serviceResult.AccessToken,
+            RefreshToken = serviceResult.RefreshToken,
+            ExpiresInMinutes = serviceResult.ExpiresInMinutes,
+            UserData = new AuthenticatedUserDataDto
+            {
+                UserId = serviceResult.UserData.UserId,
+                Email = serviceResult.UserData.Email,
+                Username = serviceResult.UserData.Email
+            }
         };
 
-        return Ok(res);
+        return Created($"api/Users/{res.UserData.UserId}", res);
     }
 
     [Authorize]
     [HttpPost("refresh")]
-    public async Task<IActionResult> RefreshTokenAsync([FromBody] LoginRequestDto req)
+    public async Task<IActionResult> RefreshTokenAsync([FromBody] RefreshTokenRequestDto req)
     {
         throw new NotImplementedException();
     }

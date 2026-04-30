@@ -1,13 +1,12 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-using Api.Services.Files;
-using Api.DomainModels.GenericResult;
-using Api.DomainModels.Features.ConvertFile;
-using Api.DomainModels.Features.FetchFile;
-using Api.DomainModels.Features.UploadFile;
-using Api.DTOs.Features.ConvertFile;
-using Api.DTOs.Features.UploadFile;
+using Api.Application.Features.Files.ConvertFile;
+using Api.Application.Features.Files.DeleteFile;
+using Api.Application.Features.Files.FetchFile;
+
+using Api.DTOs.Requests;
+using Api.DTOs.Responses;
 
 
 namespace Api.Controllers;
@@ -16,127 +15,81 @@ namespace Api.Controllers;
 [Route("api/[controller]")]
 public class FilesController : ControllerBase
 {
-    private readonly IFilesService _filesService;
+    private readonly IConvertFileService _convertFileService;
+    private readonly IDeleteFileService _deleteFileService;
+    private readonly IFetchFileService _fetchFileService;
 
-    public FilesController(IFilesService filesService)
+    public FilesController(
+        IConvertFileService convertFileService,
+        IDeleteFileService deleteFileService,
+        IFetchFileService fetchFileService
+    )
     {
-        _filesService = filesService;
-    }
-
-
-    private Guid? GetCurrentUserGuid()
-    {
-        var userGuidString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
-        var parsed = Guid.TryParse(userGuidString, out var userGuid);
-
-        if (!parsed)
-        {
-            return null;
-        }
-
-        return userGuid;
-    }
-
-    private IActionResult MapError(ErrorType? errorType, string? error)
-    {
-        return errorType switch
-        {
-            ErrorType.NotFound => NotFound(error),
-
-            ErrorType.Validation => BadRequest(error),
-
-            ErrorType.Conflict => Conflict(error),
-
-            ErrorType.Unauthorized => Unauthorized(error),
-
-            ErrorType.Unknown => StatusCode(500, error),
-
-            _ => StatusCode(500, error)
-        };
+        _convertFileService = convertFileService;
+        _deleteFileService = deleteFileService;
+        _fetchFileService = fetchFileService;
     }
 
 
     [Authorize]
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetFileAsync([FromRoute] Guid id)
+    [HttpGet("{fileId}")]
+    public async Task<IActionResult> GetFileAsync([FromRoute] Guid fileId)
     {
-        var userGuid = GetCurrentUserGuid();
+        var callerId = GetCurrentUserGuid()!.Value;
 
-        if (userGuid == null) return Unauthorized();
-        
-        var serviceResult = await _filesService.GetFileByGuidAsync(new FetchFileModel 
+        var serviceResult = await _fetchFileService.GetFileAsync(new FetchFileRequest
         {
-            FileId = id,
-            UserId = userGuid.Value
+            FileId = fileId,
+            CallerId = callerId
         });
 
-        if (!serviceResult.IsSuccess)
-        {
-            return MapError(serviceResult.ErrorType, serviceResult.Error);
-        }
-
-        var file = serviceResult.Value!;
-
-        return File(file.FileStream, file.ContentType, file.FileName);
-    }
-
-    [Authorize]
-    [HttpPost]
-    public async Task<IActionResult> PostFileAsync([FromForm] CreateNewFileRequestDto req)
-    {
-        var userGuid = GetCurrentUserGuid();
-
-        if (userGuid == null) return Unauthorized();
-        
-        var serviceResult = await _filesService.UploadFileAsync(new UploadFileModel
-        {
-            OpenStream = () => req.FormFile.OpenReadStream(),
-            ContentType = req.FormFile.ContentType,
-            FileName = req.FormFile.FileName,
-            LengthBytes = req.FormFile.Length
-        });
-
-        if (!serviceResult.IsSuccess)
-        {
-            return MapError(serviceResult.ErrorType, serviceResult.Error);
-        }
-
-        return Ok(serviceResult.Value);
+        return File(
+            serviceResult.FileStream,
+            serviceResult.ContentType,
+            serviceResult.FileId.ToString()
+        );
     }
 
     [Authorize]
     [HttpPost("convert")]
     public async Task<IActionResult> ConvertFileAsync([FromForm] ConvertFileRequestDto req)
     {
-        var userGuid = GetCurrentUserGuid();
+        var callerId = GetCurrentUserGuid()!.Value;
 
-        if (userGuid == null) return Unauthorized();
-        
-        var serviceResult = await _filesService.ConvertFileToSpecifiedFormatAsync(new ConvertFileModel
+        var serviceResult = await _convertFileService.ConvertFileAsync(new ConvertFileRequest
         {
-            UserId = userGuid.Value,
             OpenStream = () => req.FormFile.OpenReadStream(),
+            TargetExtension = req.TargetExtension,
+            ContentType = req.FormFile.ContentType,
             FileName = req.FormFile.FileName,
-            TargetExtension = req.TargetFormat,
-            ContentType = req.FormFile.ContentType
+            CallerId = callerId
         });
 
-        if (!serviceResult.IsSuccess)
+        var fileId = serviceResult.FileId.ToString();
+
+        return Created($"/api/Files/{fileId}", new ConvertFileResponseDto
         {
-            return MapError(serviceResult.ErrorType, serviceResult.Error);
-        }
-
-        var file = serviceResult.Value!;
-
-        return File(file.OutputStream, file.ContentType);
+            FileId = fileId,
+            ContentType = serviceResult.ContentType,
+            FileName = serviceResult.FileName,
+            SizeByets = serviceResult.SizeBytes,
+            DownloadUrl = serviceResult.DownloadUrl
+        });
     }
 
     [Authorize]
-    [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteFileAsync()
+    [HttpDelete("{fileId}")]
+    public async Task<IActionResult> DeleteFileAsync([FromRoute] Guid fileId)
     {
         throw new NotImplementedException();
+    }
+
+
+    private Guid? GetCurrentUserGuid()
+    {
+        var userGuidStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+        return Guid.TryParse(userGuidStr, out var guid) ? guid : null;
     }
 
 }
