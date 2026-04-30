@@ -2,5 +2,5 @@
 
 public interface IConvertFileService
 {
-    Task<ConvertFileResponse> ConvertFileAsync(ConvertFileRequest req);
+    Task<ConvertFileResponse> ConvertFileAsync(ConvertFileRequest req, CancellationToken cancellation);
 }

@@ -12,7 +12,7 @@ public class JwtTokenGenerator : IJwtTokenGenerator
 
     public JwtTokenGenerator()
     {
-        _jwtSecret = "asfasfasf253afa#@%@%@%";
+        _jwtSecret = "SuperExtraSecretJwtKey1234567890";
     }
 
     public string GenerateJwtToken(UserTokenData userTokenData)

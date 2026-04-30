@@ -3,6 +3,7 @@ using Api.Options;
 using Minio;
 using Minio.DataModel.Args;
 
+
 namespace Api.Infrastructure.ObjectStorage;
 
 public class ObjectStorage : IObjectStorage
@@ -40,7 +41,6 @@ public class ObjectStorage : IObjectStorage
     {
         try
         {
-            Console.WriteLine(_minioDirectoriesOptions.MainBucketName);
             var args = new PutObjectArgs()
                     .WithBucket(_minioDirectoriesOptions.MainBucketName)
                     .WithObject(storageKey)

@@ -22,7 +22,7 @@ public class GlobalExceptionHandler : IExceptionHandler
         Exception exception, 
         CancellationToken cancellationToken)
     {
-        //_logger.LogError(exception);
+        _logger.LogError(exception, "Exception caught by global handler");
 
         var (statusCode, message) = MapException(exception);
 

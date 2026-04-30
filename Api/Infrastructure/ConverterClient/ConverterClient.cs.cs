@@ -11,15 +11,15 @@ public class ConverterClient : IConverterClient
     }
 
     public async Task<bool> ConvertFileAsync(
-        string inputFileStorageKey, 
+        string originalFileStorageKey, 
         string outputFileStorageKey, 
-        string targetFormat)
+        string targetExtension)
     {
         var requestPayload = new
         {
-            inputFileStorageKey = inputFileStorageKey,
+            originalFileStorageKey = originalFileStorageKey,
             outputFileStorageKey = outputFileStorageKey,
-            targetFormat = targetFormat
+            targetExtension = targetExtension
         };
         
         try 

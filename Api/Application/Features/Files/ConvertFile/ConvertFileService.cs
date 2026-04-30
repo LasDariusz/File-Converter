@@ -5,7 +5,6 @@ using Api.Infrastructure.Database.Entities;
 using Api.Infrastructure.ObjectStorage;
 using Api.Options;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Options;
 using Api.Application.Exceptions;
 using Api.Application.Utils;
 
@@ -38,81 +37,73 @@ public class ConvertFileService : IConvertFileService
         _converterClient = converterClient;
     }
 
-    public async Task<ConvertFileResponse> ConvertFileAsync(ConvertFileRequest req)
+    public async Task<ConvertFileResponse> ConvertFileAsync(ConvertFileRequest req, CancellationToken cancellation)
     {
         using var fileStream = req.OpenStream();
-
         var fileExtension = FileUtils.FileExtensionFromFileName(req.FileName);
 
         if (!_fileValidator.Validate(fileExtension, fileStream.Length))
         {
-            throw new BadRequestException();
+            throw new BadRequestException("Invalid file type or size");
         }
 
         var userId = await _dbContext.Users
             .Where(u => u.PublicId == req.CallerId)
             .Select(u => (int?)u.Id)
-            .FirstOrDefaultAsync();
-
-        if (userId is null)
-        {
-            throw new NotFoundException("User", req.CallerId.ToString());
-        }
-
-        var originalFileGuid = Guid.CreateVersion7();
-        var originalFileStorageKey = $"{userId}/{originalFileGuid}_{req.FileName}";
-
-        var convertedFileGuid = Guid.CreateVersion7();
-        var convertedFileName = $"{Path.GetFileNameWithoutExtension(req.FileName)}.{req.TargetExtension}";
-        var convertedFileStorageKey = $"{userId}/{convertedFileGuid}_{convertedFileName}";
+            .FirstOrDefaultAsync(cancellation)
+            ?? throw new NotFoundException("User", req.CallerId.ToString());
 
         var fileContentType = FileUtils.FileExtensionToContentType(fileExtension);
 
+        var originalGuid = Guid.CreateVersion7();
+        var originalStorageKey = $"{userId}/{originalGuid}_{req.FileName}";
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        var convertedGuid = Guid.CreateVersion7();
+        var convertedFileName = $"{Path.GetFileNameWithoutExtension(req.FileName)}.{req.TargetExtension}";
+        var convertedStorageKey = $"{userId}/{convertedGuid}_{convertedFileName}";
+
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellation);
         try
         {
             var uploaded = await _objectStorage.UploadFileAsync(
-                originalFileStorageKey, fileStream, fileStream.Length, fileContentType
+                originalStorageKey, fileStream, fileStream.Length, fileContentType
             );
 
             if (!uploaded)
             {
                 await transaction.RollbackAsync();
-                throw new Exception();
+                throw new InternalServerErrorException("An uknown error has occured during file upload");
             }
 
             var sourceEntity = CreateFileDataEntity(
-                userId!.Value, null,
-                req.FileName, originalFileStorageKey,
-                fileStream.Length, req.ContentType);
+                userId, null, req.FileName, originalStorageKey, fileStream.Length, req.ContentType);
 
             _dbContext.Files.Add(sourceEntity);
             await _dbContext.SaveChangesAsync();
 
             var converted = await _converterClient.ConvertFileAsync(
-                originalFileStorageKey, convertedFileStorageKey, req.TargetExtension);
+                originalStorageKey, convertedStorageKey, req.TargetExtension);
 
             if (!converted)
             {
                 await transaction.RollbackAsync();
-                throw new Exception();
+                throw new InternalServerErrorException("An uknown error has occured during file convertion");
             }
 
-            var convertedStream = await _objectStorage.GetOpenFileStreamAsync(convertedFileStorageKey);
+            var convertedStream = await _objectStorage.GetOpenFileStreamAsync(convertedStorageKey);
 
             var outputEntity = CreateFileDataEntity(
-                userId!.Value, sourceEntity.Id,
-                convertedFileName, convertedFileStorageKey,
-                convertedStream.Length, fileContentType);
+                userId, sourceEntity.Id, convertedFileName, convertedStorageKey, convertedStream.Length, fileContentType);
 
             _dbContext.Files.Add(outputEntity);
-            await _dbContext.SaveChangesAsync();
-            await transaction.CommitAsync();
+            await _dbContext.SaveChangesAsync(cancellation);
+
+            await transaction.CommitAsync(cancellation);
 
             return new ConvertFileResponse
             {
-                FileId = convertedFileGuid,
+                FileId = convertedGuid,
                 ContentType = fileContentType,
                 FileName = convertedFileName,
                 SizeBytes = convertedStream.Length,
@@ -121,7 +112,7 @@ public class ConvertFileService : IConvertFileService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
+            await transaction.RollbackAsync(cancellation);
             throw;
         }
     }
