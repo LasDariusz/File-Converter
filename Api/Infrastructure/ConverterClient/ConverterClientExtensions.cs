@@ -10,7 +10,5 @@ public static class ConverterClientExtensions
             client.BaseAddress = new Uri("http://hidden-api:8000");
             client.Timeout = TimeSpan.FromMinutes(5);
         });
-
-        builder.Services.AddScoped<IConverterClient, ConverterClient>();
     }
 }

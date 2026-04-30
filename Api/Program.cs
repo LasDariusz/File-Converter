@@ -84,10 +84,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-using (var scope = app.Services.CreateScope())
+/*using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FileConverterContext>();
     dbContext.Database.Migrate();
-}
+}*/
 
 app.Run();

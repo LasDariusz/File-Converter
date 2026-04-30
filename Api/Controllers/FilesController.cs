@@ -52,7 +52,7 @@ public class FilesController : ControllerBase
 
     [Authorize]
     [HttpPost("convert")]
-    public async Task<IActionResult> ConvertFileAsync([FromForm] ConvertFileRequestDto req)
+    public async Task<IActionResult> ConvertFileAsync([FromForm] ConvertFileRequestDto req, CancellationToken cancellation)
     {
         var callerId = GetCurrentUserGuid()!.Value;
 
@@ -63,7 +63,7 @@ public class FilesController : ControllerBase
             ContentType = req.FormFile.ContentType,
             FileName = req.FormFile.FileName,
             CallerId = callerId
-        });
+        }, cancellation);
 
         var fileId = serviceResult.FileId.ToString();
 

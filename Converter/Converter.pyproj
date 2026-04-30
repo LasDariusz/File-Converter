@@ -23,7 +23,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="conversion_model.py" />
+    <Compile Include="models.py" />
     <Compile Include="converter.py" />
     <Compile Include="main.py" />
   </ItemGroup>

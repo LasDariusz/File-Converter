@@ -29,7 +29,7 @@ public class ConverterClient : IConverterClient
         } 
         catch (Exception ex) 
         {
-            return false;
+            throw new Exception($"Failed to reach service: {ex.Message}", ex);
         }
     }
 

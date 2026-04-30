@@ -17,6 +17,6 @@ public static class ObjectStorageExtensions
                 .Build();
         });
 
-        builder.Services.AddScoped<IObjectStorage, ObjectStorage>();
+        builder.Services.AddSingleton<IObjectStorage, ObjectStorage>();
     }
 }

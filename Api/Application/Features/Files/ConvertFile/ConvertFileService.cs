@@ -112,7 +112,7 @@ public class ConvertFileService : IConvertFileService
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync(cancellation);
+            //await transaction.RollbackAsync(cancellation);
             throw;
         }
     }
