@@ -26,6 +26,7 @@ public class RegisterService : IRegisterService
     public async Task<RegisterResponse> RegisterAsync(RegisterRequest req)
     {
         var email = req.Email;
+        var username = req.Username;
         var password = req.Password;
 
         var userExists = await _fileConverterContext.Users
@@ -46,7 +47,7 @@ public class RegisterService : IRegisterService
             {
                 PublicId = Guid.CreateVersion7(),
                 Email = email,
-                Username = "",
+                Username = username,
                 PasswordHash = passwordHash
             };
 
@@ -68,7 +69,7 @@ public class RegisterService : IRegisterService
                 UserData = new AuthenticatedUserData
                 {
                     UserId = user.PublicId,
-                    Email = email,
+                    Email = user.Email,
                     Username = user.Username
                 }
             };

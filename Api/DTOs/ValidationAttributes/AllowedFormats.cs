@@ -8,7 +8,7 @@ public class AllowedFormats : ValidationAttribute
     protected override ValidationResult? IsValid(object? value, ValidationContext validationContext)
     {
         var settings = validationContext
-            .GetService(typeof(IOptions<Options.FileOptions>)) as IOptions<Options.FileOptions>;
+            .GetService(typeof(IOptions<Options.UploadedFilesOptions>)) as IOptions<Options.UploadedFilesOptions>;
 
         if (settings is null)
             throw new InvalidOperationException("FileOptions not registered in DI");

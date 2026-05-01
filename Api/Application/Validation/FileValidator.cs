@@ -5,9 +5,9 @@ namespace Api.Application.Validation;
 
 public class FileValidator : IFileValidator
 {
-    private readonly IOptions<Options.FileOptions> _fileOptions;
+    private readonly IOptions<Options.UploadedFilesOptions> _fileOptions;
 
-    public FileValidator(IOptions<Options.FileOptions> fileOptions)
+    public FileValidator(IOptions<Options.UploadedFilesOptions> fileOptions)
     {
         _fileOptions = fileOptions;
     }

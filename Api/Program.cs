@@ -46,8 +46,8 @@ builder.ConfigureApplicationServices();
 
 builder.Services.Configure<MinioDirectoriesOptions>(
     builder.Configuration.GetSection("MinioDirectoriesOptions"));
-builder.Services.Configure<Api.Options.FileOptions>(
-    builder.Configuration.GetSection("FileOptions"));
+builder.Services.Configure<Api.Options.UploadedFilesOptions>(
+    builder.Configuration.GetSection("UploadedFilesOptions"));
 
 builder.Services.AddControllers();
 

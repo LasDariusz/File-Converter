@@ -58,6 +58,7 @@ public class AuthController : ControllerBase
         var serviceResult = await _registerService.RegisterAsync(new RegisterRequest
         {
             Email = req.Email,
+            Username= req.Username,
             Password = req.Password
         });
 

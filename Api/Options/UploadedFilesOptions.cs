@@ -1,6 +1,6 @@
 ﻿namespace Api.Options;
 
-public class FileOptions
+public class UploadedFilesOptions
 {
     public List<string> AllowedImageFileFormats { get; set; } = new List<string>();
     /*public List<string> AllowedVideoFileFormats { get; set; } = new List<string>();
