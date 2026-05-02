@@ -1,4 +1,5 @@
-﻿using Minio;
+﻿using Api.Options;
+using Minio;
 
 namespace Api.Infrastructure.ObjectStorage;
 
@@ -6,14 +7,24 @@ public static class ObjectStorageExtensions
 {
     public static void ConfigureObjectStorage(this IHostApplicationBuilder builder)
     {
-        var minioSettings = builder.Configuration.GetSection("MinioSetup");
+        var objectStorageOptions = builder.Configuration
+            .GetSection("ObjectStorageConfig")
+            .Get<ObjectStorageConfigOptions>()!;
 
-        builder.Services.AddScoped<IMinioClient>(s =>
+        builder.Services.Configure<ObjectStorageConfigOptions>(
+            builder.Configuration.GetSection("ObjectStorageConfig")
+        );
+
+        builder.Services.Configure<ObjectStorageBucketConfigOptions>(
+            builder.Configuration.GetSection("ObjectStorageBucketConfig")
+        );
+
+        builder.Services.AddSingleton<IMinioClient>(s =>
         {
             return new MinioClient()
-                .WithEndpoint(minioSettings["Endpoint"]!.Replace("http://", ""))
-                .WithCredentials(minioSettings["AccessKey"], minioSettings["SecretKey"])
-                .WithSSL(false)
+                .WithEndpoint(objectStorageOptions.Endpoint.Replace("http://", ""))
+                .WithCredentials(objectStorageOptions.AccessKey, objectStorageOptions.SecretKey)
+                .WithSSL(objectStorageOptions.WithSSL)
                 .Build();
         });
 

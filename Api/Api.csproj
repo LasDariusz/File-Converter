@@ -6,18 +6,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
-
+	
   <ItemGroup>
-    <Compile Remove="Application\Features\Files\FetchUserFilesMetadata\FetchUserFilesMetadataResponse.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Application\Features\Users\" />
     <Folder Include="Infrastructure\Database\Migrations\" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Application\Features\Files\FetchUserFilesMetadata\FetchUserFilesMetadataResponse.cs" />
   </ItemGroup>
 
   <ItemGroup>

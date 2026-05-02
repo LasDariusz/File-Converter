@@ -1,21 +1,24 @@
 ﻿using Api.Application.Common;
+using Api.Options;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace Api.Infrastructure.Jwt;
 
 public class JwtTokenGenerator : IJwtTokenGenerator
 {
-    private readonly string _jwtSecret;
+    private readonly JwtConfigOptions _jwtConfigOptions;
 
-    public JwtTokenGenerator()
+    public JwtTokenGenerator(IOptions<JwtConfigOptions> jwtConfigOptions)
     {
-        _jwtSecret = "SuperExtraSecretJwtKey1234567890";
+        _jwtConfigOptions = jwtConfigOptions.Value;
     }
 
-    public string GenerateJwtToken(UserTokenData userTokenData)
+    public GeneratedAccessToken GenerateJwtToken(UserTokenData userTokenData)
     {
         var claims = new List<Claim>
         {
@@ -24,19 +27,32 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtSecret));
+        var expiresAt = DateTime.UtcNow
+            .AddMinutes(_jwtConfigOptions.AccessTokenValidMinutes);
+
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_jwtConfigOptions.Secret));
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
         var token = new JwtSecurityToken(
-            issuer: "xyz",
-            audience: "xyz",
+            issuer: _jwtConfigOptions.Issuer,
+            audience: _jwtConfigOptions.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(30),
+            expires: expiresAt,
             signingCredentials: creds
         );
 
-        return new JwtSecurityTokenHandler()
-            .WriteToken(token);
+        return new GeneratedAccessToken
+        {
+            AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
+            ExpiresAt = expiresAt
+        };
+    }
+
+    public string GenereteRefreshToken()
+    {
+        return Convert.ToBase64String(
+            RandomNumberGenerator.GetBytes(64)
+        );
     }
 
 }

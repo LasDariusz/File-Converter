@@ -1,8 +1,6 @@
 import { useLanguage } from "../../contexts/LanguageContext"
 import { Button } from "../Button/Button"
-
 import "./FileCard.css"
-
 
 type FileItem = {
     id: string

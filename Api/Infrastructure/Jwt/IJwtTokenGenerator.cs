@@ -4,5 +4,7 @@ namespace Api.Infrastructure.Jwt;
 
 public interface IJwtTokenGenerator
 {
-    string GenerateJwtToken(UserTokenData userTokenData);
+    GeneratedAccessToken GenerateJwtToken(UserTokenData userTokenData);
+
+    string GenereteRefreshToken();
 }

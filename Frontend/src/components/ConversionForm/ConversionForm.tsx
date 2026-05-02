@@ -13,13 +13,13 @@ IMAGE_FORMATS.forEach(format => {
 })
 
 type ConversionPayload = {
-    targetFormat: string
     file: File
+    targetExtension: string
 }
 
 type Props = {
     onConvert: (payload: ConversionPayload) => void
-    isConverting?: boolean
+    isConverting: boolean
 }
 
 export function ConversionForm({ onConvert, isConverting }: Props) {
@@ -58,7 +58,7 @@ export function ConversionForm({ onConvert, isConverting }: Props) {
     const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault()
         if (!selectedFile) return
-        onConvert({ file: selectedFile, targetFormat: toFormat })
+        onConvert({ file: selectedFile, targetExtension: toFormat })
         setSelectedFile(null)
         event.currentTarget.reset()
     }

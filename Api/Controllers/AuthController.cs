@@ -38,8 +38,8 @@ public class AuthController : ControllerBase
         var res = new LoginResponseDto
         {
             AccessToken = serviceResult.AccessToken,
-            RefreshToken = serviceResult.RefreshToken,
             ExpiresInMinutes = serviceResult.ExpiresInMinutes,
+            RefreshToken = serviceResult.RefreshToken,
             UserData = new AuthenticatedUserDataDto
             { 
                 UserId = serviceResult.UserData.UserId,
@@ -65,8 +65,8 @@ public class AuthController : ControllerBase
         var res = new RegisterResponseDto
         {
             AccessToken = serviceResult.AccessToken,
-            RefreshToken = serviceResult.RefreshToken,
             ExpiresInMinutes = serviceResult.ExpiresInMinutes,
+            RefreshToken = serviceResult.RefreshToken,
             UserData = new AuthenticatedUserDataDto
             {
                 UserId = serviceResult.UserData.UserId,

@@ -1,8 +1,7 @@
 import { createContext, useMemo, type ReactNode, useState, useContext } from "react";
 
-
 const AUTH_LOGIN_URL: string = "http://localhost:5194/api/Auth/login";
-const AUTH_REGISTER_URL = "http://localhost:5194/api/Auth/register";
+const AUTH_REGISTER_URL: string = "http://localhost:5194/api/Auth/register";
 
 type AuthUser = {
     id: string,

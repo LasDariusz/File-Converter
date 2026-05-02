@@ -13,5 +13,6 @@
     <Folder Include="src\assets\" />
     <Folder Include="src\components\Button\" />
     <Folder Include="src\components\Input\" />
+    <Folder Include="src\utils\" />
   </ItemGroup>
 </Project>

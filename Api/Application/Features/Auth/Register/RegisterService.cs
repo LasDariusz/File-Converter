@@ -55,7 +55,7 @@ public class RegisterService : IRegisterService
             await _fileConverterContext.SaveChangesAsync();
             await transaction.CommitAsync();
 
-            var token = _jwtTokenGenerator.GenerateJwtToken(new UserTokenData 
+            var generatedToken = _jwtTokenGenerator.GenerateJwtToken(new UserTokenData 
             { 
                 UserId = user.PublicId,
                 Email = email
@@ -63,14 +63,15 @@ public class RegisterService : IRegisterService
 
             return new RegisterResponse
             {
-                AccessToken = token,
-                RefreshToken = null,
-                ExpiresInMinutes = null,
+                AccessToken = generatedToken.AccessToken,
+                ExpiresInMinutes = generatedToken.ExpiresAt
+                    .Subtract(DateTime.UtcNow).Minutes,
+                RefreshToken = _jwtTokenGenerator.GenereteRefreshToken(),
                 UserData = new AuthenticatedUserData
                 {
                     UserId = user.PublicId,
                     Email = user.Email,
-                    Username = user.Username
+                    Username = user.Username,
                 }
             };
         }

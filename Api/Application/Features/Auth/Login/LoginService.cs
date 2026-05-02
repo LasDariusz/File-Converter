@@ -44,25 +44,24 @@ public class LoginService : ILoginService
             throw new UnauthorizedException("Invalid password");
         }
 
-        var token = _jwtTokenGenerator.GenerateJwtToken(new UserTokenData
+        var generatedToken = _jwtTokenGenerator.GenerateJwtToken(new UserTokenData
         { 
             UserId = userEntity.PublicId,
             Email = email
         });
 
-        var userData = new AuthenticatedUserData
-        {
-            UserId = userEntity.PublicId,
-            Email = userEntity.Email,
-            Username = userEntity.Username,
-        };
-
         return new LoginResponse
         {
-            AccessToken = token,
-            RefreshToken = null,
-            ExpiresInMinutes = null,
-            UserData = userData
+            AccessToken = generatedToken.AccessToken,
+            ExpiresInMinutes = generatedToken.ExpiresAt
+                    .Subtract(DateTime.UtcNow).Minutes,
+            RefreshToken = _jwtTokenGenerator.GenereteRefreshToken(),
+            UserData = new AuthenticatedUserData
+            {
+                UserId = userEntity.PublicId,
+                Email = userEntity.Email,
+                Username = userEntity.Username,
+            }
         };
     }
 

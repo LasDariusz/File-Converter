@@ -1,57 +1,53 @@
 import { useEffect, useState } from "react"
-
 import { useLanguage } from "../../contexts/LanguageContext"
 import { useAuth } from "../../contexts/AuthContext"
-
 import { ConversionForm, type ConversionPayload } from "../../components/ConversionForm"
 import { FileCard, type FileItem } from "../../components/FileCard"
-
+import { apiFetch } from "../../utils/apiClient"
+import { API_BASE, FILES_METADATA_ENDPOINT } from "../../utils/constants"
 import "./DashboardPage.css"
-
-
-const API_BASE = "http://localhost:5194/api"
 
 export function DashboardPage() {
     const { t } = useLanguage()
     const { user } = useAuth()
 
-    const [files, setFiles] = useState<FileItem[]>([])
+    const [fileMetadata, setFileMetadata] = useState<FileItem[]>([])
 
-    const [isLoadingFiles, setIsLoadingFiles] = useState(true);
-    const [isConverting, setIsConverting] = useState(false);
+    //const [isLoadingUserProfile, setIsLoadingUserProfile] = useState<boolean>(false);
+    const [isLoadingUserFiles, setIsLoadingUserFiles] = useState<boolean>(true);
+    const [isConvertingFile, setIsConvertingFile] = useState<boolean>(false);
 
-    const token = localStorage.getItem("auth-token");
+    //const [loadingUserProfileError, setLoadingUserProfileError] = useState<string | null>(null)
+    const [loadingUserFilesError, setLoadingUserFilesError] = useState<string | null>(null)
+    const [fileConvertError, setFileConvertError] = useState<string | null>(null)
 
-    const fetchFiles = async () => {
+    const token = localStorage.getItem("auth-token")
+
+    const fetchUserFiles = async () => {
         if (!user?.id || !token) {
-            setIsLoadingFiles(false)
+            setIsLoadingUserFiles(false)
             return
         }
 
         try {
-            setIsLoadingFiles(true);
-
-            const res = await fetch(`${API_BASE}/Users/${user.id}/files`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
+            const res = await apiFetch(`${API_BASE}${FILES_METADATA_ENDPOINT}`);
 
             if (!res.ok) {
-                throw new Error("fetch files failed")
+                setLoadingUserFilesError(t("unkownServerError"))
+                return;
             }
 
-            const data: FileItem[] = await res.json()
-            setFiles(data)
+            const data = await res.json()
+            setFileMetadata(data.FilesMetadata)
         } catch (err) {
             console.error(err)
         } finally {
-            setIsLoadingFiles(false)
+            setIsLoadingUserFiles(false)
         }
     }
 
     useEffect(() => {
-        fetchFiles()
+        fetchUserFiles()
     }, [user?.id])
 
     const handleFileDownload = async (fileId: string, fileName: string) => {
@@ -60,14 +56,11 @@ export function DashboardPage() {
         }
 
         try {
-            const res = await fetch(`${API_BASE}/Files/${fileId}`, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            })
+            const res = await apiFetch(`${API_BASE}/Files/${fileId}`)
 
-            if (!res.ok) {
-                throw new Error(`fetch file ${fileName} failed`)
+            if (res.status >= 500) {
+                setFileConvertError(t(""))
+                return;
             }
 
             const blob = await res.blob()
@@ -87,32 +80,28 @@ export function DashboardPage() {
         }
     }
 
-    const handleConvert = async (payload: ConversionPayload) => {
-        if (isConverting || !token) {
+    const handleFileConvert = async (payload: ConversionPayload) => {
+        if (isConvertingFile || !token) {
             return
         }
 
-        setIsConverting(true)
-
+        setIsConvertingFile(true)
         try {
             const formData = new FormData()
-            formData.append("TargetFormat", payload.targetFormat)
             formData.append("FormFile", payload.file)
+            formData.append("TargetExtension", payload.targetExtension)
 
-            const res = await fetch(`${API_BASE}/Files/convert`, {
+            const res = await apiFetch(`${API_BASE}/Files/convert`, {
                 method: "POST",
-                headers: {
-                    Authorization: `Bearer ${token}`
-                },
                 body: formData
             })
 
             if (!res.ok) {
-                throw new Error(await res.text())
+                setFileConvertError("Convertion failed")
             }
 
             const blob = await res.blob()
-            const ext = payload.targetFormat
+            const ext = payload.targetExtension
             const name = payload.file.name.replace(/\.[^.]+$/, "") + `_converted.${ext}`;
 
             const url = URL.createObjectURL(blob)
@@ -126,48 +115,47 @@ export function DashboardPage() {
 
             URL.revokeObjectURL(url)
 
-            await fetchFiles()
+            await fetchUserFiles()
         } catch (err) {
             console.error(err);
             alert(t("convertError"));
         } finally {
-            setIsConverting(false);
+            setIsConvertingFile(false);
         }
     }
 
     return (
         <section className="dashboard-grid">
             <ConversionForm
-                onConvert={handleConvert}
-                isConverting={isConverting}
+                onConvert={handleFileConvert}
+                isConverting={isConvertingFile}
             />
 
-            <div className="files-panel">
-                <h2>{t("yourFiles")}</h2>
+            {fileConvertError && (
+                <p>{fileConvertError}</p>
+            )}
 
-                {isLoadingFiles ?
-                    (
-                        <p>{t("loadingFiles")}</p>
-                    )
-                    : files.length === 0 ?
-                    (
-                        <p>{t("noFiles")}</p>
-                    )
-                    :
-                    (
-                        <div className="file-list">
-                            {files.map(f => (
-                                <FileCard
-                                    key={f.id}
-                                    file={f}
-                                    onDownload={handleFileDownload}
-                                />
-                            ))}
-                        </div>
-                    )
-                }
+            <div className="files-panel">
+                <h2>{t("loadingFiles")}</h2>
+                 
+                {isLoadingUserFiles ? (
+                    <p>{t("loadingFiles")}</p>
+                ) : loadingUserFilesError ? (
+                    <p>{loadingUserFilesError}</p>
+                ) : fileMetadata.length === 0 ? (
+                    <p>{t("noFiles")}</p>
+                ) : (
+                    <div className="file-list">
+                        {fileMetadata.map(f => (
+                            <FileCard
+                                key={f.id}
+                                file={f}
+                                onDownload={handleFileDownload}
+                            />
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     )
-
 }

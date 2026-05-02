@@ -1,15 +1,11 @@
-using Microsoft.EntityFrameworkCore;
+using Api.Application;
+using Api.Infrastructure.ConverterClient;
+using Api.Infrastructure.Database;
+using Api.Infrastructure.Jwt;
+using Api.Infrastructure.ObjectStorage;
+using Api.Middlewares;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerUI;
-using Api.Options;
-using Api.Middlewares;
-using Api.Infrastructure.Database.Context;
-using Api.Infrastructure.ConverterClient;
-using Api.Infrastructure.ObjectStorage;
-using Api.Infrastructure.Jwt;
-using Api.Application;
-using Api.Infrastructure.Database;
-
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -36,21 +32,14 @@ builder.ConfigureConverterHttpClient();
 
 builder.ConfigureDatabaseContext();
 
-builder.ConfigureTokenGeneration();
+builder.ConfigureTokenAuthentication();
 
 builder.ConfigureObjectStorage();
-
 
 builder.ConfigureApplicationServices();
 
 
-builder.Services.Configure<MinioDirectoriesOptions>(
-    builder.Configuration.GetSection("MinioDirectoriesOptions"));
-builder.Services.Configure<Api.Options.UploadedFilesOptions>(
-    builder.Configuration.GetSection("UploadedFilesOptions"));
-
 builder.Services.AddControllers();
-
 
 
 builder.Services.AddHttpContextAccessor();

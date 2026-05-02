@@ -3,19 +3,18 @@ using Api.Options;
 using Minio;
 using Minio.DataModel.Args;
 
-
 namespace Api.Infrastructure.ObjectStorage;
 
 public class ObjectStorage : IObjectStorage
 {
     private readonly IMinioClient _minioClient;
-    private readonly MinioDirectoriesOptions _minioDirectoriesOptions;
+    private readonly ObjectStorageBucketConfigOptions _bucketConfigOptions;
 
     public ObjectStorage(IMinioClient minioClient, 
-        IOptions<MinioDirectoriesOptions> minioDirectoriesOptions)
+        IOptions<ObjectStorageBucketConfigOptions> bucketConfigOptions)
     {
         _minioClient = minioClient;
-        _minioDirectoriesOptions = minioDirectoriesOptions.Value;
+        _bucketConfigOptions = bucketConfigOptions.Value;
     }
 
     public async Task<Stream> GetOpenFileStreamAsync(string storageKey)
@@ -23,7 +22,7 @@ public class ObjectStorage : IObjectStorage
         var memoryStream = new MemoryStream();
 
         var args = new GetObjectArgs()
-            .WithBucket(_minioDirectoriesOptions.MainBucketName)
+            .WithBucket(_bucketConfigOptions.MainBucketName)
             .WithObject(storageKey)
             .WithCallbackStream((minioStream) =>
             {
@@ -42,7 +41,7 @@ public class ObjectStorage : IObjectStorage
         try
         {
             var args = new PutObjectArgs()
-                    .WithBucket(_minioDirectoriesOptions.MainBucketName)
+                    .WithBucket(_bucketConfigOptions.MainBucketName)
                     .WithObject(storageKey)
                     .WithStreamData(stream)
                     .WithObjectSize(streamLength)

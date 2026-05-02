@@ -1,6 +1,5 @@
 import "./Button.css"
 
-
 type Props = {
     type?: "button" | "submit"
     className?: "button" | "primary-button" | "secondary-button" |
@@ -11,7 +10,6 @@ type Props = {
 }
 
 export function Button({type = "button", className, onClick, disabled, children}: Props) {
-
     return (
         <button
             type={type}
@@ -22,5 +20,4 @@ export function Button({type = "button", className, onClick, disabled, children}
             {children}
         </button>
     )
-
 }

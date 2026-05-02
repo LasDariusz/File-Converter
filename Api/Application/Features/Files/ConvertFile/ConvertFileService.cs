@@ -1,28 +1,23 @@
-﻿using Api.Application.Validation;
+﻿using Microsoft.EntityFrameworkCore;
+using Api.Application.Validation;
+using Api.Application.Exceptions;
+using Api.Application.Utils;
 using Api.Infrastructure.ConverterClient;
 using Api.Infrastructure.Database.Context;
 using Api.Infrastructure.Database.Entities;
 using Api.Infrastructure.ObjectStorage;
 using Api.Options;
-using Microsoft.EntityFrameworkCore;
-using Api.Application.Exceptions;
-using Api.Application.Utils;
-
 
 namespace Api.Application.Features.Files.ConvertFile;
 
 public class ConvertFileService : IConvertFileService
 {
     private readonly FileConverterContext _dbContext;
-
     private readonly IFileValidator _fileValidator;
-
     private readonly IObjectStorage _objectStorage;
     private readonly IConverterClient _converterClient;
-
-    private readonly MinioDirectoriesOptions _minioDirectoriesOptions;
+    private readonly ObjectStorageConfigOptions _minioDirectoriesOptions;
     
-
     public ConvertFileService(
         FileConverterContext dbContext,
         IFileValidator fileValidator,
@@ -41,6 +36,7 @@ public class ConvertFileService : IConvertFileService
     {
         using var fileStream = req.OpenStream();
         var fileExtension = FileUtils.FileExtensionFromFileName(req.FileName);
+        var targetExtension = req.TargetExtension;
 
         if (!_fileValidator.Validate(fileExtension, fileStream.Length))
         {
@@ -59,9 +55,9 @@ public class ConvertFileService : IConvertFileService
         var originalStorageKey = $"{userId}/{originalGuid}_{req.FileName}";
 
         var convertedGuid = Guid.CreateVersion7();
-        var convertedFileName = $"{Path.GetFileNameWithoutExtension(req.FileName)}.{req.TargetExtension}";
+        var convertedFileName = $"{Path.GetFileNameWithoutExtension(req.FileName)}.{targetExtension}";
         var convertedStorageKey = $"{userId}/{convertedGuid}_{convertedFileName}";
-
+        var convertedContentType = FileUtils.FileExtensionToContentType(targetExtension);
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellation);
         try
@@ -94,7 +90,7 @@ public class ConvertFileService : IConvertFileService
             var convertedStream = await _objectStorage.GetOpenFileStreamAsync(convertedStorageKey);
 
             var outputEntity = CreateFileDataEntity(
-                userId, sourceEntity.Id, convertedFileName, convertedStorageKey, convertedStream.Length, fileContentType);
+                userId, sourceEntity.Id, convertedFileName, convertedStorageKey, convertedStream.Length, convertedContentType);
 
             _dbContext.Files.Add(outputEntity);
             await _dbContext.SaveChangesAsync(cancellation);
@@ -103,16 +99,33 @@ public class ConvertFileService : IConvertFileService
 
             return new ConvertFileResponse
             {
-                FileId = convertedGuid,
-                ContentType = fileContentType,
-                FileName = convertedFileName,
-                SizeBytes = convertedStream.Length,
-                DownloadUrl = null
+                SourceFile = new Common.FileMetadata 
+                { 
+                    FileId = sourceEntity.PublicId,
+                    FileName = sourceEntity.FileName,
+                    ContentType = sourceEntity.ContentType,
+                    FileSizeBytes = sourceEntity.FileSizeBytes,
+                    Status = sourceEntity.Status,
+                    CreatedAt = sourceEntity.CreatedAt,
+                    DownloadUrl = $"/api/Files/{sourceEntity.PublicId}",
+                    SourceFileDownloadUrl = null
+                },
+                ConvertedFile = new Common.FileMetadata 
+                {
+                    FileId = outputEntity.PublicId,
+                    FileName = outputEntity.FileName,
+                    ContentType = outputEntity.ContentType,
+                    FileSizeBytes = outputEntity.FileSizeBytes,
+                    Status = outputEntity.Status,
+                    CreatedAt = outputEntity.CreatedAt,
+                    DownloadUrl = $"/api/Files/{outputEntity.PublicId}",
+                    SourceFileDownloadUrl = $"/api/Files/{sourceEntity.PublicId}"
+                }
             };
         }
         catch (Exception ex)
         {
-            //await transaction.RollbackAsync(cancellation);
+            await transaction.RollbackAsync(cancellation);
             throw;
         }
     }
