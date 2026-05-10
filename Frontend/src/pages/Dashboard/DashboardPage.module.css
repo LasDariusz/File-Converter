@@ -1,20 +1,16 @@
-.dashboard-grid {
+.dashboardGrid {
     display: grid;
     grid-template-columns: 320px 1fr;
     gap: 18px;
 }
 
-.files-panel {
-
-}
-
-.file-list {
+.fileList {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.converting-info {
+.convertingInfo{
     color: #0d5db8;
     font-size: 13px;
     font-weight: 600;

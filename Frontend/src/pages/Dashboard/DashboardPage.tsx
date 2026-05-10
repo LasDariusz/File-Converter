@@ -4,12 +4,12 @@ import { useAuth } from "../../contexts/AuthContext"
 import { ConversionForm, type ConversionPayload } from "../../components/ConversionForm"
 import { FileCard, type FileItem } from "../../components/FileCard"
 import { apiFetch } from "../../utils/apiClient"
-import { API_BASE, FILES_METADATA_ENDPOINT } from "../../utils/constants"
-import "./DashboardPage.css"
+import { API_BASE, FILES_METADATA, FILES_CONVERT } from "../../utils/constants"
+import styles from "./DashboardPage.module.css"
 
 export function DashboardPage() {
     const { t } = useLanguage()
-    const { user } = useAuth()
+    const { user, handleUnauthorized } = useAuth()
 
     const [fileMetadata, setFileMetadata] = useState<FileItem[]>([])
 
@@ -21,24 +21,16 @@ export function DashboardPage() {
     const [loadingUserFilesError, setLoadingUserFilesError] = useState<string | null>(null)
     const [fileConvertError, setFileConvertError] = useState<string | null>(null)
 
-    const token = localStorage.getItem("auth-token")
-
     const fetchUserFiles = async () => {
-        if (!user?.id || !token) {
-            setIsLoadingUserFiles(false)
-            return
-        }
-
+        setIsLoadingUserFiles(true)
         try {
-            const res = await apiFetch(`${API_BASE}${FILES_METADATA_ENDPOINT}`);
-
+            const res = await apiFetch(`${API_BASE}${FILES_METADATA}`, handleUnauthorized)
             if (!res.ok) {
                 setLoadingUserFilesError(t("unkownServerError"))
-                return;
+                return
             }
-
             const data = await res.json()
-            setFileMetadata(data.FilesMetadata)
+            setFileMetadata(data.filesMetadata)
         } catch (err) {
             console.error(err)
         } finally {
@@ -48,21 +40,16 @@ export function DashboardPage() {
 
     useEffect(() => {
         fetchUserFiles()
-    }, [user?.id])
+    }, [user?.userId])
 
-    const handleFileDownload = async (fileId: string, fileName: string) => {
-        if (!token) {
-            return
-        }
-
+    const handleFileDownload = async (fileUrl: string, fileName: string) => {
+        console.log(fileUrl)
         try {
-            const res = await apiFetch(`${API_BASE}/Files/${fileId}`)
-
+            const res = await apiFetch(fileUrl, handleUnauthorized)
             if (res.status >= 500) {
                 setFileConvertError(t(""))
                 return;
             }
-
             const blob = await res.blob()
             const url = URL.createObjectURL(blob)
 
@@ -81,41 +68,42 @@ export function DashboardPage() {
     }
 
     const handleFileConvert = async (payload: ConversionPayload) => {
-        if (isConvertingFile || !token) {
-            return
-        }
-
         setIsConvertingFile(true)
         try {
             const formData = new FormData()
             formData.append("FormFile", payload.file)
             formData.append("TargetExtension", payload.targetExtension)
 
-            const res = await apiFetch(`${API_BASE}/Files/convert`, {
+            const res = await apiFetch(`${API_BASE}${FILES_CONVERT}`, handleUnauthorized, {
                 method: "POST",
                 body: formData
             })
 
             if (!res.ok) {
                 setFileConvertError("Convertion failed")
+                return
             }
 
-            const blob = await res.blob()
-            const ext = payload.targetExtension
-            const name = payload.file.name.replace(/\.[^.]+$/, "") + `_converted.${ext}`;
+            const conversionData = await res.json()
+            const fileName = conversionData.convertedFile.fileName
+            const fileUrl = conversionData.convertedFile.downloadUrl
 
+            const fileRes = await apiFetch(fileUrl, handleUnauthorized)
+
+            if (!fileRes.ok) {
+                setFileConvertError("Conversion failed")
+                return
+            }
+
+            const blob = await fileRes.blob()
             const url = URL.createObjectURL(blob)
             const link = document.createElement("a")
             link.href = url
-            link.download = name
-
+            link.download = fileName
             document.body.appendChild(link)
             link.click()
             link.remove()
-
             URL.revokeObjectURL(url)
-
-            await fetchUserFiles()
         } catch (err) {
             console.error(err);
             alert(t("convertError"));
@@ -125,7 +113,7 @@ export function DashboardPage() {
     }
 
     return (
-        <section className="dashboard-grid">
+        <section className={styles.dashboardGrid}>
             <ConversionForm
                 onConvert={handleFileConvert}
                 isConverting={isConvertingFile}
@@ -135,7 +123,7 @@ export function DashboardPage() {
                 <p>{fileConvertError}</p>
             )}
 
-            <div className="files-panel">
+            <div>
                 <h2>{t("loadingFiles")}</h2>
                  
                 {isLoadingUserFiles ? (
@@ -145,10 +133,10 @@ export function DashboardPage() {
                 ) : fileMetadata.length === 0 ? (
                     <p>{t("noFiles")}</p>
                 ) : (
-                    <div className="file-list">
+                    <div className={styles.fileList}>
                         {fileMetadata.map(f => (
                             <FileCard
-                                key={f.id}
+                                key={f.fileId}
                                 file={f}
                                 onDownload={handleFileDownload}
                             />

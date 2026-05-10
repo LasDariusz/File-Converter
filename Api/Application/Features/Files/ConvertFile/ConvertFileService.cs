@@ -107,7 +107,7 @@ public class ConvertFileService : IConvertFileService
                     FileSizeBytes = sourceEntity.FileSizeBytes,
                     Status = sourceEntity.Status,
                     CreatedAt = sourceEntity.CreatedAt,
-                    DownloadUrl = $"/api/Files/{sourceEntity.PublicId}",
+                    DownloadUrl = $"http://localhost:5194/api/Files/{sourceEntity.PublicId}",
                     SourceFileDownloadUrl = null
                 },
                 ConvertedFile = new Common.FileMetadata 
@@ -118,8 +118,8 @@ public class ConvertFileService : IConvertFileService
                     FileSizeBytes = outputEntity.FileSizeBytes,
                     Status = outputEntity.Status,
                     CreatedAt = outputEntity.CreatedAt,
-                    DownloadUrl = $"/api/Files/{outputEntity.PublicId}",
-                    SourceFileDownloadUrl = $"/api/Files/{sourceEntity.PublicId}"
+                    DownloadUrl = $"http://localhost:5194/api/Files/{outputEntity.PublicId}",
+                    SourceFileDownloadUrl = $"http://localhost:5194/api/Files/{sourceEntity.PublicId}"
                 }
             };
         }

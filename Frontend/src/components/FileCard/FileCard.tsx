@@ -1,9 +1,9 @@
 import { useLanguage } from "../../contexts/LanguageContext"
 import { Button } from "../Button/Button"
-import "./FileCard.css"
+import styles from "./FileCard.module.css"
 
 type FileItem = {
-    id: string
+    fileId: string
     fileName: string
     contentType: string
     fileSizeBytes: number
@@ -15,7 +15,7 @@ type FileItem = {
 
 type Props = {
     file: FileItem
-    onDownload: (fileId: string, fileName: string) => void
+    onDownload: (downloadUrl: string, fileName: string) => void
 }
 
 function formatFileSize(bytes: number): string {
@@ -45,39 +45,35 @@ export function FileCard({ file, onDownload }: Props) {
     const { t } = useLanguage()
 
     const fileNameSplit = file.fileName.split(".")
-
-    const fileExtensionUpper = fileNameSplit.length > 1 ?
+    const fileExtUpper = fileNameSplit.length > 1 ? 
         fileNameSplit.pop()?.toUpperCase() : ""
 
     return (
-        <article className="file-card">
-            <div className="file-header">
-                <span className="file-extension">{fileExtensionUpper}</span>
-                <h3 className="file-name">{file.fileName}</h3>
+        <article className={styles.fileCard}>
+            <div className={styles.cardHeaderWrapper}>
+                <span className={styles.fileExtension}>{fileExtUpper}</span>
+                <h3 className={styles.fileName}>{file.fileName}</h3>
             </div>
 
-            <div className="file-metadata">
+            <div className={styles.fileMetadata}>
                 <span>{formatFileSize(file.fileSizeBytes)}</span>
                 <span>{file.contentType}</span>
                 <span>{formatFileDate(file.createdAt)}</span>
             </div>
 
-            <div className="file-actions">
+            <div className={styles.fileActions}>
                 <Button
                     type="button"
                     className="download-button"
-                    onClick={() => onDownload(file.id, file.fileName)}
+                    onClick={() => onDownload(file.downloadUrl, file.fileName)}
                 >{t("download")}</Button>
 
                 {file.sourceFileDownloadUrl && (
                     <Button
                         type="button"
                         className="download-button"
-                        onClick={() => onDownload(
-                            file.sourceFileDownloadUrl!.split("/").pop()!,
-                            t("sourceFile")
-                        )}
-                    >t("sourceFile")</Button>
+                        onClick={() => onDownload(file.sourceFileDownloadUrl!, file.fileName)}
+                    >{t("sourceFile")}</Button>
                 )}
             </div>
         </article>

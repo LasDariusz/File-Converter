@@ -1,10 +1,9 @@
+export class UnauthorizedError extends Error { }
 
-const clearSession = () => {
-    localStorage.removeItem("auth-token")
-    window.location.href = "/login"
-}
-
-export const apiFetch = async (url: string, options?: RequestInit) => {
+export const apiFetch = async (
+    url: string,
+    onUnauthorized: () => void,
+    options?: RequestInit) => {
     const token = localStorage.getItem("auth-token")
 
     const res = await fetch(url, {
@@ -13,11 +12,11 @@ export const apiFetch = async (url: string, options?: RequestInit) => {
             ...options?.headers,
             Authorization: `Bearer ${token}`
         }
-    });
+    })
 
     if (res.status === 401) {
-        clearSession()
+        onUnauthorized()
     }
 
-    return res;
+    return res
 }

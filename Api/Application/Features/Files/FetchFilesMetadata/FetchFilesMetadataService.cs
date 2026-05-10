@@ -73,7 +73,7 @@ public class FetchFilesMetadataService : IFetchFilesMetadataService
         Guid publicId, string fileName, string contentType, long fileSizeBytes, 
         string? status, DateTime createdAt, Guid? sourceFilePublicId)
     {
-        string endpoint = "/api/Files/";
+        string url = "http://localhost:5194/api/Files/";
 
         return new FileMetadata
         {
@@ -83,9 +83,9 @@ public class FetchFilesMetadataService : IFetchFilesMetadataService
             FileSizeBytes = fileSizeBytes,
             Status = status,
             CreatedAt = createdAt,
-            DownloadUrl = $"{endpoint}{publicId}",
+            DownloadUrl = $"{url}{publicId}",
             SourceFileDownloadUrl = sourceFilePublicId != null ?
-                $"{endpoint}{sourceFilePublicId}" : null
+                $"{url}{sourceFilePublicId}" : null
         };
     }
 

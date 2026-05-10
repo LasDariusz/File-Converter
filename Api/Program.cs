@@ -1,12 +1,13 @@
 using Api.Application;
-using Api.Infrastructure.ConverterClient;
-using Api.Infrastructure.Database;
 using Api.Infrastructure.Jwt;
 using Api.Infrastructure.ObjectStorage;
+using Api.Infrastructure.ConverterClient;
+using Api.Infrastructure.Database;
+using Api.Infrastructure.Database.Context;
 using Api.Middlewares;
 using Microsoft.OpenApi;
+using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -73,10 +74,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-/*using (var scope = app.Services.CreateScope())
+using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<FileConverterContext>();
     dbContext.Database.Migrate();
-}*/
+}
 
 app.Run();

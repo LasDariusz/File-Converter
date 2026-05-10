@@ -1,38 +1,41 @@
-import { createContext, useMemo, type ReactNode, useState, useContext } from "react";
+import { createContext, useMemo, type ReactNode, useState, useContext } from "react"
+import { useNavigate } from "react-router-dom"
+import { API_BASE, AUTH_LOGIN_ENDPOINT, AUTH_REGISTER_ENDPOINT } from "../utils/constants"
+import { apiFetch } from "../utils/apiClient"
 
-const AUTH_LOGIN_URL: string = "http://localhost:5194/api/Auth/login";
-const AUTH_REGISTER_URL: string = "http://localhost:5194/api/Auth/register";
-
-type AuthUser = {
-    id: string,
-    username: string,
-    email: string
-};
+type AuthUserData = {
+    userId: string,
+    email: string,
+    username: string
+}
 
 type AuthContextVal = {
-    user: AuthUser | null,
+    user: AuthUserData | null,
     login: (email: string, password: string) => Promise<void>,
     register: (username: string, email: string, password: string) => Promise<void>,
     refresh: () => Promise<void>,
-    logout: () => void
+    logout: () => void,
+    handleUnauthorized: () => void
 };
 
 const AuthContext = createContext<AuthContextVal | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-    const [user, setUser] = useState<AuthUser | null>(() => {
-        const storedCreds = localStorage.getItem("converter-user");
-        if (!storedCreds) return null;
-        return JSON.parse(storedCreds) as AuthUser;
+    const navigate = useNavigate()
+
+    const [userData, setUserData] = useState<AuthUserData | null>(() => {
+        const storedCreds = localStorage.getItem("converter-user")
+        if (!storedCreds) return null
+        return JSON.parse(storedCreds) as AuthUserData
     });
 
     const login = async (email: string, password: string) => {
         try {
-            const res = await fetch(AUTH_LOGIN_URL, {
+            const res = await apiFetch(`${API_BASE}${AUTH_LOGIN_ENDPOINT}`, handleUnauthorized, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({email, password})
-            });
+            })
 
             if (!res.ok) {
                 const resTxt = await res.text();
@@ -41,17 +44,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 
             const loginData = await res.json();
 
-            const loggedInUser: AuthUser = {
-                id: loginData.id,
-                username: loginData.username,
-                email: email
+            const loggedInUser: AuthUserData = {
+                userId: loginData.userData.userId,
+                email: loginData.userData.email,
+                username: loginData.userData.username
             };
 
-            setUser(loggedInUser);
+            setUserData(loggedInUser);
             localStorage.setItem("converter-user", JSON.stringify(loggedInUser));
 
-            if (loginData.token) {
-                localStorage.setItem("auth-token", loginData.token);
+            if (loginData.accessToken) {
+                localStorage.setItem("auth-token", loginData.accessToken);
             }
 
         } catch (err) {
@@ -62,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const register = async (username: string, email: string, password: string) => {
         try {
-            const res = await fetch(AUTH_REGISTER_URL, {
+            const res = await apiFetch(`${API_BASE}${AUTH_REGISTER_ENDPOINT}`, handleUnauthorized, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({email, username, password})
@@ -75,17 +78,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
             const loginData = await res.json();
 
-            const loggedInUser: AuthUser = {
-                id: loginData.id,
+            const loggedInUser: AuthUserData = {
+                userId: loginData.userId,
                 username: loginData.username,
                 email: email
             }
 
-            setUser(loggedInUser);
+            setUserData(loggedInUser);
             localStorage.setItem("converter-user", JSON.stringify(loggedInUser));
 
-            if (loginData.token) {
-                localStorage.setItem("auth-token", loginData.token);
+            if (loginData.accessToken) {
+                localStorage.setItem("auth-token", loginData.accessToken);
             }
         } catch (err) {
             console.log("Login error:", err)
@@ -96,14 +99,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const refresh = async () => { };
 
     const logout = () => {
-        setUser(null);
+        setUserData(null);
         localStorage.removeItem("converter-user");
         localStorage.removeItem("auth-token");
     };
 
+    const handleUnauthorized = () => {
+        setUserData(null)
+        localStorage.removeItem("converter-user")
+        localStorage.removeItem("auth-token")
+        navigate("/login")
+    }
+
     const value = useMemo(
-        () => ({ user, login, register, refresh, logout }),
-        [user]
+        () => ({ user: userData, login, register, refresh, logout, handleUnauthorized }),
+        [userData]
     );
 
     return (
