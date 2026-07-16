@@ -6,7 +6,7 @@ public interface ISecurityCredentialsManager
 {
     string HashPassword(string password);
 
-    bool VerifyPassword(string password, UserModel user);
+    RefreshTokenHashedModel HashRefreshToken(RefreshTokenModel refreshToken);
 
-    RefreshTokenModel HashRefreshToken(RefreshTokenModel refreshToken);
+    bool VerifyPassword(string password, UserModel user);
 }

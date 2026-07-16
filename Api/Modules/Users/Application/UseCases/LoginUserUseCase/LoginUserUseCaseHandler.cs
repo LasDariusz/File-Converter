@@ -33,14 +33,14 @@ public class LoginUserUseCaseHandler : ILoginUserUseCaseHandler
             throw new InvalidCredentialsException();
 
         var refreshToken = _jwtTokenGenerator
-            .GenerateRefreshToken(user);
+            .GenerateRefreshToken();
 
-        var refreshTokenHash = _securityCredentialsManager
+        var refreshTokenHashed = _securityCredentialsManager
             .HashRefreshToken(refreshToken);
 
         var tokenSaved = await _usersRepository.SaveUserRefreshTokenAsync(
             user, 
-            refreshTokenHash, 
+            refreshTokenHashed, 
             cancellationToken);
 
         if (!tokenSaved)

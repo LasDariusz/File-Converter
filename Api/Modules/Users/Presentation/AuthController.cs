@@ -37,9 +37,9 @@ public class AuthController : ControllerBase
         return Ok(new LoginResponseDto
         {
             AccessToken = result.AccessToken.Value,
-            AccessTokenExpiresInMinutes = result.AccessToken.ExpiresInMinutes,
+            AccessTokenExpiresAt = result.AccessToken.ExpiresAt,
             RefreshToken = result.RefreshToken.Value,
-            RefreshTokenExpiresInHours = result.RefreshToken.ExpiresInMinutes,
+            RefreshTokenExpiresAt = result.RefreshToken.ExpiresAt,
             UserId = result.SafeUserData.UserId,
             Email = result.SafeUserData.Email
         });
@@ -60,9 +60,9 @@ public class AuthController : ControllerBase
         return Created($"api/Users/{result.SafeUserData.UserId}", new CreateAccountResponseDto
         {
             AccessToken = result.AccessToken.Value,
-            AccessTokenExpiresInMinutes = result.AccessToken.ExpiresInMinutes,
+            AccessTokenExpiresAt = result.AccessToken.ExpiresAt,
             RefreshToken = result.RefreshToken.Value,
-            RefreshTokenExpiresInHours = result.RefreshToken.ExpiresInMinutes,
+            RefreshTokenExpiresAt = result.RefreshToken.ExpiresAt,
             UserId = result.SafeUserData.UserId,
             Email = result.SafeUserData.Email
         });

@@ -1,5 +1,7 @@
 ﻿using Api.Modules.Users.Application.Ports;
 using Api.Modules.Users.Domain.Models;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Api.Modules.Users.Infrastructure.Adapters;
 
@@ -10,9 +12,18 @@ public class SecurityCredentialsManager : ISecurityCredentialsManager
         return BCrypt.Net.BCrypt.HashPassword(password);
     }
 
-    public RefreshTokenModel HashRefreshToken(RefreshTokenModel refreshToken)
+    public RefreshTokenHashedModel HashRefreshToken(RefreshTokenModel refreshToken)
     {
-        throw new NotImplementedException();
+        var bytes = Encoding.UTF8.GetBytes(refreshToken.Value);
+
+        var hash = SHA256.HashData(bytes);
+
+        return new RefreshTokenHashedModel
+        {
+            Value = Convert.ToHexString(hash),
+            ExpiresAt = refreshToken.ExpiresAt
+
+        };
     }
 
     public bool VerifyPassword(string password, UserModel user)

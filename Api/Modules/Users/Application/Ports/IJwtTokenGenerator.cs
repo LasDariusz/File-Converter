@@ -6,5 +6,5 @@ public interface IJwtTokenGenerator
 {
     AccessTokenModel GenerateJwtToken(UserModel user);
 
-    RefreshTokenModel GenerateRefreshToken(UserModel user);
+    RefreshTokenModel GenerateRefreshToken();
 }

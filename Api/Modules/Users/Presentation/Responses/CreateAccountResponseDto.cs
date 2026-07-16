@@ -1,16 +1,16 @@
 ﻿namespace Api.Modules.Users.Presentation.Responses;
 
-public class CreateAccountResponseDto
+public record class CreateAccountResponseDto
 {
-    public required string AccessToken { get; set; }
+    public required string AccessToken { get; init; }
 
-    public required int AccessTokenExpiresInMinutes { get; set; }
+    public DateTime AccessTokenExpiresAt { get; init; }
 
-    public required string RefreshToken { get; set; }
+    public required string RefreshToken { get; init; }
 
-    public required int RefreshTokenExpiresInHours { get; set; }
+    public DateTime RefreshTokenExpiresAt { get; init; }
 
-    public required Guid UserId { get; set; }
+    public required Guid UserId { get; init; }
 
-    public required string Email { get; set; }
+    public required string Email { get; init; }
 }

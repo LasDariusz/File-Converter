@@ -5,6 +5,7 @@ public class UserModel
     public Guid PublicId { get; set; }
 
     private string _email = string.Empty;
+
     public string Email {
         get => _email;
         private set

@@ -1,7 +1,7 @@
-﻿using Api.Application.Common;
-using Api.Modules.Users.Application.Ports;
+﻿using Api.Modules.Users.Application.Ports;
 using Api.Modules.Users.Domain.Models;
 using Api.Modules.Users.Infrastructure.Config;
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,12 +20,12 @@ public class JwtTokenGenerator : IJwtTokenGenerator
         _jwtConfigOptions = jwtConfigOptions.Value;
     }
 
-    public GeneratedAccessToken GenerateJwtToken(UserTokenData userTokenData)
+    public AccessTokenModel GenerateJwtToken(UserModel user)
     {
         var claims = new List<Claim>
         {
-            new Claim(ClaimTypes.NameIdentifier, userTokenData.UserId.ToString()),
-            new Claim(JwtRegisteredClaimNames.Email, userTokenData.Email),
+            new Claim(ClaimTypes.NameIdentifier, user.PublicId.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 
@@ -43,21 +43,23 @@ public class JwtTokenGenerator : IJwtTokenGenerator
             signingCredentials: creds
         );
 
-        return new GeneratedAccessToken
+        return new AccessTokenModel
         {
-            AccessToken = new JwtSecurityTokenHandler().WriteToken(token),
+            Value = new JwtSecurityTokenHandler().WriteToken(token),
             ExpiresAt = expiresAt
         };
     }
 
-    public AccessTokenModel GenerateJwtToken(UserModel user)
+    public RefreshTokenModel GenerateRefreshToken()
     {
-        throw new NotImplementedException();
-    }
+        return new RefreshTokenModel
+        {
+            Value = WebEncoders.Base64UrlEncode(
+                RandomNumberGenerator.GetBytes(64)),
 
-    public RefreshTokenModel GenerateRefreshToken(UserModel user)
-    {
-        throw new NotImplementedException();
+            ExpiresAt = DateTime.UtcNow.AddDays(
+                _jwtConfigOptions.RefreshTokenValidDays)
+        };
     }
 
     public string GenereteRefreshToken()

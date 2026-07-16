@@ -2,7 +2,7 @@
 
 public class AccessTokenModel
 {
-    public required string Value { get; set; }
+    public required string Value { get; init; }
 
-    public required int ExpiresInMinutes { get; set; }
+    public DateTime ExpiresAt { get; init; }
 }

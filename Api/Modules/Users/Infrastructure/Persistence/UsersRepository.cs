@@ -17,7 +17,7 @@ public class UsersRepository : IUsersRepository
 
     public async Task<UserModel> CreateUserWithRefreshTokenAsync(
         UserModel user, 
-        RefreshTokenModel refreshToken, 
+        RefreshTokenHashedModel refreshToken, 
         CancellationToken cancellationToken)
     {
         var userEntity = new UserEntity
@@ -57,11 +57,32 @@ public class UsersRepository : IUsersRepository
             : UserModel.Rehydrate(user.PublicId, user.Email, user.PasswordHash);
     }
 
-    public Task<bool> SaveUserRefreshTokenAsync(
+    public async Task<bool> SaveUserRefreshTokenAsync(
         UserModel user, 
-        RefreshTokenModel refreshToken, 
+        RefreshTokenHashedModel refreshToken, 
         CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        var userId = await _dbContext.Users
+            .Where(u => u.PublicId ==  user.PublicId)
+            .Select(u => (int?)u.UserId)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (userId is null)
+            return false;
+
+        var tokenEntity = new RefreshTokenEntity
+        {
+            UserId = userId.Value,
+            TokenHash = refreshToken.Value,
+            ExpiresAt = refreshToken.ExpiresAt,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _dbContext.RefreshTokens.AddAsync(
+            tokenEntity, 
+            cancellationToken);
+
+        return await _dbContext.SaveChangesAsync(cancellationToken) > 0;
     }
+
 }

@@ -30,12 +30,15 @@ public class CreateUserAccountUseCaseHandler : ICreateUserAccountUseCaseHandler
             command.Email,
             _securityCredentialsManager.HashPassword(command.Password));
 
-        var refreshToken = _jwtTokenGenerator.GenerateRefreshToken(user);
-        var refreshTokenHash = _securityCredentialsManager.HashRefreshToken(refreshToken);
+        var refreshToken = _jwtTokenGenerator
+            .GenerateRefreshToken();
+
+        var refreshTokenHashed = _securityCredentialsManager
+            .HashRefreshToken(refreshToken);
 
         var userSaved = await _usersRepository.CreateUserWithRefreshTokenAsync(
             user, 
-            refreshTokenHash, 
+            refreshTokenHashed, 
             cancellationToken);
 
         return new CreateUserAccountResult

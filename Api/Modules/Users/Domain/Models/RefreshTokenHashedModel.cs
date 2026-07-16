@@ -1,8 +1,8 @@
 ﻿namespace Api.Modules.Users.Domain.Models;
 
-public class RefreshTokenModel
+public class RefreshTokenHashedModel
 {
     public required string Value { get; init; }
 
-    public DateTime ExpiresAt{ get; init; }
+    public DateTime ExpiresAt { get; init; }
 }

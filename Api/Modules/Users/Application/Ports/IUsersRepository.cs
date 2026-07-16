@@ -10,7 +10,7 @@ public interface IUsersRepository
 
     Task<bool> SaveUserRefreshTokenAsync(
         UserModel user,
-        RefreshTokenModel refreshToken,
+        RefreshTokenHashedModel refreshToken,
         CancellationToken cancellationToken); 
 
     Task<UserModel?> FindUserByEmailAsync(
@@ -19,6 +19,6 @@ public interface IUsersRepository
 
     Task<UserModel> CreateUserWithRefreshTokenAsync(
         UserModel user,
-        RefreshTokenModel refreshToken,
+        RefreshTokenHashedModel refreshToken,
         CancellationToken cancellationToken);
 }

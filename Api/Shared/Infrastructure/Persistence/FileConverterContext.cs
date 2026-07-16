@@ -13,6 +13,8 @@ public class FileConverterContext : DbContext
 
     public DbSet<UserEntity> Users { get; set; }
 
+    public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
+
     public DbSet<FileDataEntity> Files { get; set; }
 
     public DbSet<ConversionJobEntity> Conversions { get; set; }
@@ -28,6 +30,15 @@ public class FileConverterContext : DbContext
             user.HasIndex(u => u.Email)
                 .HasDatabaseName("IdxUq_Users_Email")
                 .IsUnique();
+        });
+
+        modelBuilder.Entity<RefreshTokenEntity>(token =>
+        {
+            token.HasOne<UserEntity>()
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .HasConstraintName("Fk_UserId_Users")
+                .OnDelete(DeleteBehavior.Restrict);
         });
 
         modelBuilder.Entity<FileDataEntity>(file =>
