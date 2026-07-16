@@ -27,7 +27,7 @@ public class LoginUserUseCaseHandler : ILoginUserUseCaseHandler
             .FindUserByEmailAsync(command.Email, cancellationToken);
 
         if (user == null)
-            throw new UserNotFoundException();
+            throw new InvalidCredentialsException();
 
         if (!_securityCredentialsManager.VerifyPassword(command.Password, user))
             throw new InvalidCredentialsException();

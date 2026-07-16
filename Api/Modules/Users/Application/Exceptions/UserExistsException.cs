@@ -1,5 +1,12 @@
-﻿namespace Api.Modules.Users.Application.Exceptions;
+﻿using Api.Shared.Application.Exceptions;
 
-public class UserExistsException : Exception
+namespace Api.Modules.Users.Application.Exceptions;
+
+public class UserExistsException : AppException
 {
+    public UserExistsException() : base(
+        "User already exists",
+        ErrorType.Conflict)
+    {
+    }
 }

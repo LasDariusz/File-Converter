@@ -1,5 +1,12 @@
-﻿namespace Api.Modules.Users.Application.Exceptions;
+﻿using Api.Shared.Application.Exceptions;
 
-public class InvalidCredentialsException : Exception
+namespace Api.Modules.Users.Application.Exceptions;
+
+public class InvalidCredentialsException : AppException
 {
+    public InvalidCredentialsException() : base(
+        "Provided credentials are invalid",
+        ErrorType.Unauthorized)
+    {
+    }
 }

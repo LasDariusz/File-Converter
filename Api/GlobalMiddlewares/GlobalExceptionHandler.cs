@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Api.Application.Exceptions;
+using Api.Shared.Application.Exceptions;
 
 namespace Api.GlobalMiddlewares;
 
@@ -41,10 +41,22 @@ public class GlobalExceptionHandler : IExceptionHandler
         });
     }
 
-    private static (int, string) MapException(Exception ex) => ex switch
+    private static (int StatusCode, string Message) MapException(Exception ex) => ex switch
     {
-        AppException appException => ((int)appException.StatusCode, appException.Message),
+        AppException appException =>
+            (MapStatusCode(appException.ErrorType), appException.Message),
+
         _ => (StatusCodes.Status500InternalServerError, "An unexpected error has occured")
+    };
+
+    private static int MapStatusCode(ErrorType errorType) => errorType switch
+    {
+        ErrorType.Validation => StatusCodes.Status400BadRequest,
+        ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+        ErrorType.Forbidden => StatusCodes.Status403Forbidden,
+        ErrorType.NotFound => StatusCodes.Status404NotFound,
+        ErrorType.Conflict => StatusCodes.Status409Conflict,
+        _ => StatusCodes.Status500InternalServerError
     };
 
 }

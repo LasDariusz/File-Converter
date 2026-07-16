@@ -111,7 +111,7 @@ public class LoginUserUseCaseHandlerTests
     }
 
     [Fact]
-    public async Task ExecuteAsync_WhenUserDoesNotExist_ShouldThrowUserNotFoundException()
+    public async Task ExecuteAsync_WhenUserDoesNotExist_ShouldThrowInvalidCredentialsException()
     {
         var command = new LoginUserCommand
         {
@@ -125,7 +125,7 @@ public class LoginUserUseCaseHandlerTests
                 It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserModel?)null);
 
-        await Assert.ThrowsAsync<UserNotFoundException>(
+        await Assert.ThrowsAsync<InvalidCredentialsException>(
             () => _system.ExecuteAsync(
                 command,
                 CancellationToken.None));

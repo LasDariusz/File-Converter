@@ -2,9 +2,9 @@ using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Api.Shared.Infrastructure.Persistence;
-using Api.GlobalMiddlewares;
 using Api.Modules.Users;
 using Api.Modules.Files.Infrastructure.Adapters;
+using Api.GlobalMiddlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 

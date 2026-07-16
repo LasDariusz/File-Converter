@@ -24,7 +24,7 @@ public class CreateUserAccountUseCaseHandler : ICreateUserAccountUseCaseHandler
         CreateUserAccountCommand command, CancellationToken cancellationToken)
     {
         if (await _usersRepository.EmailExistsAsync(command.Email, cancellationToken))
-            throw new UserExistsException();
+            throw new InvalidCredentialsException();
 
         var user = UserModel.Create(
             command.Email,
