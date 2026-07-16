@@ -1,13 +1,10 @@
-using Api.Application;
-using Api.Infrastructure.Jwt;
-using Api.Infrastructure.ObjectStorage;
-using Api.Infrastructure.ConverterClient;
-using Api.Infrastructure.Database;
-using Api.Infrastructure.Database.Context;
-using Api.Middlewares;
 using Microsoft.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
+using Api.Shared.Infrastructure.Persistence;
+using Api.GlobalMiddlewares;
+using Api.Modules.Users;
+using Api.Modules.Files.Infrastructure.Adapters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,16 +25,21 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+//
+builder.ConfigureUsersModule();
 
+
+
+
+
+
+//
 builder.ConfigureConverterHttpClient();
 
 builder.ConfigureDatabaseContext();
 
-builder.ConfigureTokenAuthentication();
 
 builder.ConfigureObjectStorage();
-
-builder.ConfigureApplicationServices();
 
 
 builder.Services.AddControllers();

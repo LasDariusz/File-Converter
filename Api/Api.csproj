@@ -8,7 +8,14 @@
   </PropertyGroup>
 	
   <ItemGroup>
-    <Folder Include="Infrastructure\Database\Migrations\" />
+    <Folder Include="Modules\Files\Domain\Exceptions\" />
+    <Folder Include="Modules\Users\Application\UseCases\RefreshUserTokenUseCase\" />
+    <Folder Include="Modules\Users\Domain\Exceptions\" />
+    <Folder Include="Shared\Infrastructure\Persistence\DbMigrations\" />
+  </ItemGroup>
+	
+  <ItemGroup>
+    <None Include="Modules\Files\Application\UseCases\GetFileUseCase\IGetFileUseCaseHandler.cs" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,8 +33,10 @@
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
+    <PackageReference Include="Microsoft.OpenApi" Version="2.7.5" />
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.23.0" />
     <PackageReference Include="Minio" Version="7.0.0" />
+    <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
     <PackageReference Include="Swashbuckle.AspNetCore.Swagger" Version="10.1.4" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.1.4" />
     <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.1.4" />

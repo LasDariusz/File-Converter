@@ -1,69 +1,85 @@
-version: '3.8'
-
 services:
-  minio-storage:  
+  storage:  
     image: minio/minio
-    container_name: minio-file-storage
+    container_name: storage
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: Password123!
+      MINIO_ROOT_USER: fileconverter
+      MINIO_ROOT_PASSWORD: DevPassword123!
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
-      - minio_data:/data
+      - storage_data:/data
 
-  sqlserver-db:
+  sqldb:
     image: mcr.microsoft.com/mssql/server:2025-latest
-    container_name: sql-server-db
+    container_name: sqldb
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=Password123!
+      - MSSQL_SA_PASSWORD=DevPassword123!
     ports:
       - "1433:1433"
     volumes:
-      - sqlserver_data:/var/opt/mssql
+      - sqldb_data:/var/opt/mssql
 
-  api:
+  broker:
+    image: rabbitmq:4-management
+    container_name: broker
+    hostname: broker
+    environment:
+      RABBITMQ_DEFAULT_USER: fileconverter
+      RABBITMQ_DEFAULT_PASS: DevPassword123!
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - broker_data:/var/lib/rabbitmq
+
+  converter-api:
     build:
       context: "./Api"
       dockerfile: Dockerfile
-    container_name: dotnet-file-api
+    container_name: converter-api
     ports:
       - "5194:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sql-server-db;Database=FileConverter;User Id=sa;Password=Password123!;TrustServerCertificate=True
-      - Minio__Endpoint=minio-storage:9000
+      - ConnectionStrings__DefaultConnection=Server=sqldb;Database=FileConverter;User Id=sa;Password=DevPassword123!;TrustServerCertificate=True
+      - Minio__Endpoint=storage:9000
       - Minio__AccessKey=admin
       - Minio__SecretKey=Password123!
     depends_on:
-      - sqlserver-db
-      - minio-storage
+      - broker 
+      - sqldb
+      - storage
 
-  hidden-api:
+  converter-worker:
     build:
       context: "./Converter" 
-    container_name: python-converter
-    ports:
-      - "8000:8000"
+    container_name: converter-worker
     environment:
-      - MINIO_ENDPOINT=minio-storage:9000
-      - MINIO_ACCESS_KEY=admin
-      - MINIO_SECRET_KEY=Password123!
+      - BROKER_URL=
+      - STORAGE_ENDPOINT=storage:9000
+      - STORAGE_ACCESS_KEY=fileconverter
+      - STORAGE_SECRET_KEY=DevPassword123!
+      - STORAGE_BUCKET=user-files
     depends_on:
-      - minio-storage
+      broker:
+        condition: service_healthy
+      storage:
+        condition: service_started
 
   frontend:
-      build:
-        context: "./Frontend"
-        dockerfile: Dockerfile
-      container_name: react-frontend
-      ports:
-        - "3000:80"
-      depends_on:
-        - api
+    build:
+      context: "./Frontend"
+      dockerfile: Dockerfile
+    container_name: converter-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - converter-api
   
 volumes:
-  minio_data:
-  sqlserver_data:
+  broker_data:
+  storage_data:
+  sqldb_data:

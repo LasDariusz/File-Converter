@@ -1,5 +1,15 @@
-from pydantic import BaseModel, Field, ConfigDict
+from datetime import datetime, timezone
+from uuid import UUID, uuid4
 
+from pydantic import BaseModel, ConfigDict, Field
+
+
+def utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+class ConversionRequested:
+    model_config = ConfigDict 
 
 class ConversionJob(BaseModel):
 
