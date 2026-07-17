@@ -1,20 +1,34 @@
-from datetime import datetime, timezone
-from uuid import UUID, uuid4
+from pydantic import BaseModel, Field
 
-from pydantic import BaseModel, ConfigDict, Field
-
-
-def utc_now() -> datetime:
-    return datetime.now(timezone.utc)
-
-
-class ConversionRequested:
-    model_config = ConfigDict 
 
 class ConversionJob(BaseModel):
+    input_file_storage_key: str = Field(
+        alias="originalFileStorageKey"
+    )
 
-    input_file_storage_key: str = Field(alias="originalFileStorageKey")
+    output_file_storage_key: str = Field(
+        alias="outputFileStorageKey"
+    )
 
-    output_file_storage_key: str = Field(alias="outputFileStorageKey")
+    target_extension: str = Field(
+        alias="targetExtension"
+    )
 
-    target_extension: str = Field(alias="targetExtension")
+
+class ConversionResult(BaseModel):
+    output_file_storage_key: str = Field(
+        alias="outputFileStorageKey"
+    )
+
+    extension: str
+    content_type: str = Field(
+        alias="contentType"
+    )
+
+    size_bytes: int = Field(
+        alias="sizeBytes"
+    )
+
+    model_config = {
+        "populate_by_name": True
+    }

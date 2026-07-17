@@ -68,7 +68,7 @@ def convert_image(
 
             return
 
-        source_image.save(
+        image.save(
             target_path, 
             format=pillow_format)
 

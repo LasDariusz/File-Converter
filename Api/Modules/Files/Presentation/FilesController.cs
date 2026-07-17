@@ -1,6 +1,5 @@
 ﻿using Api.Modules.Files.Application.UseCases.GetFileDetailsUseCase;
 using Api.Modules.Files.Application.UseCases.GetFileUseCase;
-using Api.Modules.Files.Presentation.Requests;
 using Api.Modules.Files.Presentation.Responses;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

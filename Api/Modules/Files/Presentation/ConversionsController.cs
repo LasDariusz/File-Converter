@@ -2,7 +2,6 @@
 using Api.Modules.Files.Application.UseCases.GetConversionStatusUseCase;
 using Api.Modules.Files.Application.UseCases.RequestFileConversionUseCase;
 using Api.Modules.Files.Presentation.Requests;
-using Api.Modules.Files.Presentation.Responses;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 

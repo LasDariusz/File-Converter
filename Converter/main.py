@@ -1,83 +1,183 @@
 import os
 import uuid
-import logging
-
 from pathlib import Path
+
 from fastapi import FastAPI, HTTPException
 from minio import Minio
 from minio.error import S3Error
 
-from models import ConversionJob
 from converter import convert
+from models import ConversionJob, ConversionResult
 
 
 app = FastAPI()
 
-ENDPOINT = "minio-storage:9000"
-ACCESS_KEY = "admin"
-ACCESS_PASSWORD = "Password123!"
-
-minio_client = Minio(
-    ENDPOINT, 
-    access_key=ACCESS_KEY, 
-    secret_key=ACCESS_PASSWORD, 
-    secure=False
+ENDPOINT = os.getenv(
+    "MINIO_ENDPOINT",
+    "minio-storage:9000",
 )
 
-BUCKET_NAME = "user-files"
+ACCESS_KEY = os.getenv(
+    "MINIO_ACCESS_KEY",
+    "admin",
+)
 
-def _extension_from_key(storage_key: str) -> str:
-    return Path(storage_key).suffix.lstrip(".").lower()
+ACCESS_PASSWORD = os.getenv(
+    "MINIO_SECRET_KEY",
+    "Password123!",
+)
 
-def _ensure_bucket_online() -> None:
-    try:
-        if not minio_client.bucket_exists(bucket_name=BUCKET_NAME):
-            minio_client.make_bucket(bucket_name=BUCKET_NAME)
+BUCKET_NAME = os.getenv(
+    "MINIO_BUCKET",
+    "user-files",
+)
 
-    except S3Error as err:
-        print(err)
-        raise err
+
+CONTENT_TYPES = {
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "png": "image/png",
+    "webp": "image/webp",
+    "ppm": "image/x-portable-pixmap",
+    "bmp": "image/bmp",
+}
+
+minio_client = Minio(
+    ENDPOINT,
+    access_key=ACCESS_KEY,
+    secret_key=ACCESS_PASSWORD,
+    secure=False,
+)
+
+def extension_from_key(storage_key: str) -> str:
+    extension = (
+        Path(storage_key)
+        .suffix
+        .lstrip(".")
+        .lower()
+    )
+
+    if not extension:
+        raise ValueError(
+            "Storage key has no extension"
+        )
+
+    return extension
+
+
+def ensure_bucket_online() -> None:
+    if not minio_client.bucket_exists(
+        bucket_name=BUCKET_NAME
+    ):
+        minio_client.make_bucket(
+            bucket_name=BUCKET_NAME
+        )
+
 
 @app.on_event("startup")
 async def startup() -> None:
-    _ensure_bucket_online()
+    ensure_bucket_online()
 
 
-@app.post("/convert", status_code=200)
-async def convert_file(job: ConversionJob):
-    conversion_id = uuid.uuid4()
-    source_ext = _extension_from_key(job.input_file_storage_key)
-    target_ext = job.target_extension.lstrip(".").lower()
+@app.post(
+    "/convert",
+    response_model=ConversionResult,
+)
+def convert_file(
+    job: ConversionJob,
+) -> ConversionResult:
+    temporary_id = uuid.uuid4()
 
-    tmp_input = f"/tmp/{conversion_id}_input.{source_ext}"
-    tmp_output = f"/tmp/{conversion_id}_output.{target_ext}"
+    source_extension = extension_from_key(
+        job.input_file_storage_key
+    )
+
+    target_extension = (
+        job.target_extension
+        .strip()
+        .lstrip(".")
+        .lower()
+    )
+
+    output_key_extension = extension_from_key(
+        job.output_file_storage_key
+    )
+
+    if output_key_extension != target_extension:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Output storage-key extension does "
+                "not match target extension"
+            ),
+        )
+
+    input_path = (
+        f"/tmp/{temporary_id}_input."
+        f"{source_extension}"
+    )
+
+    output_path = (
+        f"/tmp/{temporary_id}_output."
+        f"{target_extension}"
+    )
 
     try:
-        minio_client.fget_object(BUCKET_NAME, job.input_file_storage_key, tmp_input)
+        minio_client.fget_object(
+            BUCKET_NAME,
+            job.input_file_storage_key,
+            input_path,
+        )
 
-        convert(tmp_input, tmp_output)
+        convert(
+            input_path,
+            output_path,
+        )
+
+        content_type = CONTENT_TYPES.get(
+            target_extension,
+            "application/octet-stream",
+        )
+
+        size_bytes = os.path.getsize(
+            output_path
+        )
 
         minio_client.fput_object(
-            BUCKET_NAME, 
-            job.output_file_storage_key, 
-            tmp_output)
+            BUCKET_NAME,
+            job.output_file_storage_key,
+            output_path,
+            content_type=content_type,
+        )
 
-        print(f"[CONVERSION SUCCESSFUL] {source_ext} -> {target_ext}")
+        return ConversionResult(
+            outputFileStorageKey=(
+                job.output_file_storage_key
+            ),
+            extension=target_extension,
+            contentType=content_type,
+            sizeBytes=size_bytes,
+        )
 
-    except (ValueError, RuntimeError) as err:
-        print(f"[CONVERSION ERROR] {job.input_file_storage_key} => {err}")
-        raise HTTPException(status_code=422, detail=str(err))
+    except (ValueError, RuntimeError) as error:
+        raise HTTPException(
+            status_code=422,
+            detail=str(error),
+        ) from error
 
-    except S3Error as err:
-        print(f"[MinIO ERROR] {err}")
-        raise HTTPException(status_code=500, detail=str(err))
+    except S3Error as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error
 
-    except Exception as err:
-        print(f"[UNEXPECTED ERROR] {err}")
-        raise HTTPException(status_code=500, detail=str(err))
+    except Exception as error:
+        raise HTTPException(
+            status_code=500,
+            detail=str(error),
+        ) from error
 
     finally:
-        for path in (tmp_input, tmp_output):
+        for path in (input_path, output_path):
             if os.path.exists(path):
                 os.remove(path)
-    return;
