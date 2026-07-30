@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using Api.Shared.Infrastructure.Persistence;
 using Api.Modules.Users;
+using Api.Modules.Files;
 using Api.Modules.Files.Infrastructure.Adapters;
 using Api.GlobalMiddlewares;
 
@@ -27,14 +28,7 @@ builder.Services.AddCors(options =>
 });
 //
 builder.ConfigureUsersModule();
-
-
-
-
-
-
-//
-builder.ConfigureConverterHttpClient();
+builder.ConfigureFilesFeatures();
 
 builder.ConfigureDatabaseContext();
 

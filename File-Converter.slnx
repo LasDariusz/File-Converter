@@ -1,8 +1,4 @@
 <Solution>
-  <Folder Name="/Docker Gitignore/">
-    <File Path=".gitignore" />
-    <File Path="docker-compose.yml" />
-  </Folder>
   <Project Path="Api/Api.csproj" />
   <Project Path="ApiTests/ApiTests.csproj" />
   <Project Path="Converter/Converter.pyproj" Type="888888a0-9f3d-457c-b088-3a5042f75d52" Id="cce053c7-affc-4390-9d49-688c6169c8fa">
@@ -12,5 +8,4 @@
     <Build />
     <Deploy />
   </Project>
-  
 </Solution>

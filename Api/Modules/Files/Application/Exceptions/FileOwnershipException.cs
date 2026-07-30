@@ -1,5 +1,11 @@
-﻿namespace Api.Modules.Files.Application.Exceptions;
+using Api.Shared.Application.Exceptions;
 
-public class FileOwnershipException : Exception
+namespace Api.Modules.Files.Application.Exceptions;
+
+public sealed class FileOwnershipException : AppException
 {
+    public FileOwnershipException()
+        : base("The file does not belong to the current user.", ErrorType.Forbidden)
+    {
+    }
 }

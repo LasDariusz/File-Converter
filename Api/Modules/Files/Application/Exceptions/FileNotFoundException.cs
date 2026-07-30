@@ -1,5 +1,11 @@
-﻿namespace Api.Modules.Files.Application.Exceptions;
+using Api.Shared.Application.Exceptions;
 
-public class FileNotFoundException : Exception
+namespace Api.Modules.Files.Application.Exceptions;
+
+public sealed class FileNotFoundException : AppException
 {
+    public FileNotFoundException()
+        : base("The requested file was not found.", ErrorType.NotFound)
+    {
+    }
 }

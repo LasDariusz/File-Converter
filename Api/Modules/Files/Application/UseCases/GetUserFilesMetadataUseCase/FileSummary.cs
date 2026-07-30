@@ -8,7 +8,7 @@ public class FileSummary
 
     public Guid OwnerId { get; init; }
 
-    public FileMetadata Metadata { get; init; }
+    public required FileMetadata Metadata { get; init; }
 
     public string FileName => Metadata.FileName;
 

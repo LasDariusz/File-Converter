@@ -44,7 +44,7 @@ def convert_image(
             f"Unsupported target format [{target_extension}]")
 
     with Image.open(source_path) as source_image:
-        image = ImageOps.exif_transponse(source_image)
+        image = ImageOps.exif_transpose(source_image)
 
         if pillow_format == "JPEG" and source_image.mode in ("RGBA", "LA", "P"):
             rgba_image = image.convert("RGBA")

@@ -7,3 +7,5 @@ pydantic-settings
 Pillow
 pillow-heif
 cairosvg
+pika
+requests

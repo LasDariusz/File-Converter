@@ -26,7 +26,7 @@ public class GetFileUseCaseHandler : IGetFileUseCaseHandler
             cancellationToken);
 
         if (fileModel == null)
-            throw new Exceptions.FileNotFoundException();
+            throw new Api.Modules.Files.Application.Exceptions.FileNotFoundException();
 
         var fileStream = await _fileStorage.GetOpenFileStreamAsync(
             fileModel.StorageKey, 
@@ -38,6 +38,7 @@ public class GetFileUseCaseHandler : IGetFileUseCaseHandler
         return new GetFileResult
         {
             FileId = fileModel.FileId,
+            FileName = fileModel.FileName,
             ContentType = fileModel.ContentType,
             FileStream = fileStream,
         };

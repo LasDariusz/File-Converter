@@ -1,32 +1,38 @@
-﻿using Api.Modules.Files.Application.Ports;
+using Api.Modules.Files.Application.Ports;
+using Api.Modules.Files.Application.UseCases.GetUserFilesMetadataUseCase;
 
 namespace Api.Modules.Files.Application.UseCases.GetFileDetailsUseCase;
 
-public class GetUserFilesMetadataUseCaseHandler : IGetUserFilesMetadataUseCaseHandler
+public sealed class GetUserFilesMetadataUseCaseHandler : IGetUserFilesMetadataUseCaseHandler
 {
     private readonly IFilesRepository _filesRepository;
 
-    public GetUserFilesMetadataUseCaseHandler(
-        IFilesRepository filesRepository)
+    public GetUserFilesMetadataUseCaseHandler(IFilesRepository filesRepository)
     {
         _filesRepository = filesRepository;
     }
 
     public async Task<GetUserFilesMetadataResult> ExecuteAsync(
-        GetUserFilesMetadataCommand command, 
+        GetUserFilesMetadataCommand command,
         CancellationToken cancellationToken)
     {
-        var fileList = await _filesRepository.FindUserFilesByUserIdAsync(
-            command.UserId, 
+        var files = await _filesRepository.FindUserFilesByUserIdAsync(
+            command.UserId,
             cancellationToken);
 
-        var safeFileList = fileList
+        var summaries = files
+            .Select(file => new FileSummary
+            {
+                FileId = file.FileId,
+                OwnerId = file.OwnerId,
+                Metadata = file.Metadata,
+                CreatedAt = file.CreatedAt
+            })
             .ToList();
 
         return new GetUserFilesMetadataResult
         {
-            Files = null
+            Files = summaries
         };
     }
-
 }

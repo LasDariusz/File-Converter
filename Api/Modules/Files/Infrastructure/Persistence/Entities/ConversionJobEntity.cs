@@ -28,7 +28,7 @@ public class ConversionJobEntity
     public required string OutputFormat { get; set; }
 
     [Required]
-    public required ConversionStatusModel Status { get; set; } = ConversionStatusModel.Queued;
+    public required ConversionStatus Status { get; set; } = ConversionStatus.Queued;
 
     [MaxLength(255)]
     public string? ErrorMessage { get; set; }

@@ -22,6 +22,12 @@ services:
       - "1433:1433"
     volumes:
       - sqldb_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P 'DevPassword123!' -C -Q 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   broker:
     image: rabbitmq:4-management
@@ -35,6 +41,11 @@ services:
       - "15672:15672"
     volumes:
       - broker_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
 
   converter-api:
     build:
@@ -44,29 +55,45 @@ services:
     ports:
       - "5194:8080"
     environment:
-      - ConnectionStrings__DefaultConnection=Server=sqldb;Database=FileConverter;User Id=sa;Password=DevPassword123!;TrustServerCertificate=True
-      - Minio__Endpoint=storage:9000
-      - Minio__AccessKey=admin
-      - Minio__SecretKey=Password123!
+      - DatabaseConfig__DefaultConnection=Server=sqldb;Database=FileConverter;User Id=sa;Password=DevPassword123!;TrustServerCertificate=True
+      - ObjectStorageConfig__Endpoint=http://storage:9000
+      - ObjectStorageConfig__AccessKey=fileconverter
+      - ObjectStorageConfig__SecretKey=DevPassword123!
+      - ObjectStorageConfig__WithSSL=false
+      - RabbitMq__HostName=broker
+      - RabbitMq__Port=5672
+      - RabbitMq__UserName=fileconverter
+      - RabbitMq__Password=DevPassword123!
+      - InternalApi__Key=LocalWorkerKey123!
     depends_on:
-      - broker 
-      - sqldb
-      - storage
+      broker:
+        condition: service_healthy
+      sqldb:
+        condition: service_healthy
+      storage:
+        condition: service_started
 
   converter-worker:
     build:
       context: "./Converter" 
     container_name: converter-worker
     environment:
-      - BROKER_URL=
-      - STORAGE_ENDPOINT=storage:9000
-      - STORAGE_ACCESS_KEY=fileconverter
-      - STORAGE_SECRET_KEY=DevPassword123!
-      - STORAGE_BUCKET=user-files
+      - RABBITMQ_HOST=broker
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USER=fileconverter
+      - RABBITMQ_PASSWORD=DevPassword123!
+      - API_BASE_URL=http://converter-api:8080
+      - INTERNAL_API_KEY=LocalWorkerKey123!
+      - MINIO_ENDPOINT=storage:9000
+      - MINIO_ACCESS_KEY=fileconverter
+      - MINIO_SECRET_KEY=DevPassword123!
+      - MINIO_BUCKET=user-files
     depends_on:
       broker:
         condition: service_healthy
       storage:
+        condition: service_started
+      converter-api:
         condition: service_started
 
   frontend:

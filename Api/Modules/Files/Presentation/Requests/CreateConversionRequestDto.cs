@@ -1,5 +1,4 @@
-﻿using Api.Modules.Files.Domain.Models;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Api.Modules.Files.Presentation.Requests;
 

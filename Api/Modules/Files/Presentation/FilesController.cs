@@ -43,7 +43,7 @@ public class FilesController : ControllerBase
         return File(
             result.FileStream,
             result.ContentType,
-            result.FileId.ToString()
+            result.FileName
         );
     }
 

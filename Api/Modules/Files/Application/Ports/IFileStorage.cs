@@ -1,4 +1,6 @@
-﻿namespace Api.Modules.Files.Application.Ports;
+﻿using Api.Modules.Files.Application.Common;
+
+namespace Api.Modules.Files.Application.Ports;
 
 public interface IFileStorage
 {
@@ -6,14 +8,12 @@ public interface IFileStorage
         string storageKey, 
         CancellationToken cancellationToken);
 
-    Task<bool> UploadFileAsync(
-        string storageKey, 
-        Stream stream, 
-        long streamLength, 
-        string contentType,
+    Task UploadFileAsync(
+        string storageKey,
+        IncomingFile incomingFile,
         CancellationToken cancellationToken);
 
-    Task<bool> DeleteFileAsync(
+    Task DeleteFileAsync(
         string storageKey, 
         CancellationToken cancellationToken);
 }

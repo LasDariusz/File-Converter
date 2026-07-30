@@ -6,7 +6,7 @@ public class RequestFileConversionCommand
 {
     public required Guid CallerId { get; set; }
 
-    public required IncomingFile SourceFile { get; set; }
+    public required IncomingFile File { get; set; }
 
     public required string TargetFormat { get; set; }
 }

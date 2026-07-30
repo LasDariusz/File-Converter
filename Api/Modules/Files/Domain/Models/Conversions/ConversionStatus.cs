@@ -1,6 +1,6 @@
 ﻿namespace Api.Modules.Files.Domain.Models.Conversions;
 
-public enum ConversionStatusModel
+public enum ConversionStatus
 {
     Queued,
     Processing,
